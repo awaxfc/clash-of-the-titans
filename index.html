@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a1238">
+<meta name="description" content="A short interactive quest of Perseus, after the 1981 film Clash of the Titans, narrated by Zeus.">
+<title>Clash of the Titans — The Quest of Perseus</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E%E2%9A%A1%3C/text%3E%3C/svg%3E">
+<style>
+:root{
+  --lapis:#0d1a52; --night:#060b26; --gold:#f2c84b; --gold2:#b8860b; --marble:#efe9dc;
+  --bronze:#b06a2c; --sea:#1b4f6b; --ink:#f7f0dc; --dim:#c9bf9f;
+  --serif:"Palatino Linotype","Book Antiqua",Palatino,"URW Palladio L",Georgia,"Times New Roman",serif;
+  --safe-b:env(safe-area-inset-bottom,0px); --safe-t:env(safe-area-inset-top,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:#03050f;color:var(--ink);font-family:var(--serif);overflow:hidden;overscroll-behavior:none}
+body{display:flex;justify-content:center;touch-action:manipulation;-webkit-user-select:none;user-select:none}
+#app{position:relative;width:100%;max-width:560px;height:100vh;height:100dvh;display:flex;flex-direction:column;
+  background:radial-gradient(120% 70% at 50% 0%,#1a2a78 0%,var(--lapis) 45%,var(--night) 100%);
+  box-shadow:0 0 60px rgba(242,200,75,.12);overflow:hidden}
+@media (min-width:600px){#app{border-left:2px solid #6b5420;border-right:2px solid #6b5420}}
+/* top bar */
+#top{display:flex;align-items:center;gap:8px;padding:calc(6px + var(--safe-t)) 10px 6px;min-height:68px;
+  background:linear-gradient(#0a103a,#0a103acc);border-bottom:2px solid var(--gold2);position:relative;z-index:5}
+#chap{flex:1;min-width:0;font-size:clamp(13px,3.6vw,17px);letter-spacing:.14em;text-transform:uppercase;color:var(--gold);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 0 8px rgba(242,200,75,.5)}
+.icon-btn{flex:none;width:56px;height:56px;border-radius:50%;border:2px solid var(--gold2);background:radial-gradient(circle at 35% 30%,#2c3c8f,#111a4d);
+  color:var(--gold);font-size:26px;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;font-family:var(--serif)}
+.icon-btn:active{transform:scale(.94)}
+.icon-btn[hidden]{display:none}
+#hintBtn svg{width:40px;height:40px}
+/* stage */
+#stage{position:relative;flex:1 1 auto;min-height:150px;overflow:hidden}
+#svg{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:manipulation}
+#flash{position:absolute;inset:0;background:#fff8d8;opacity:0;pointer-events:none;z-index:3}
+#flash.on{animation:flash .55s steps(4) 1}
+@keyframes flash{0%{opacity:.85}30%{opacity:.1}50%{opacity:.6}100%{opacity:0}}
+#card{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+  background:rgba(4,7,25,.82);z-index:4;opacity:0;pointer-events:none;transition:opacity .5s;padding:20px}
+#card.on{opacity:1;pointer-events:auto}
+#card .num{font-size:clamp(30px,9vw,52px);color:var(--gold);text-shadow:0 0 18px rgba(242,200,75,.7)}
+#card .name{font-size:clamp(22px,6.4vw,34px);letter-spacing:.16em;text-transform:uppercase;margin-top:6px}
+#card .rule{width:60%;height:10px;margin:14px auto;background:
+  repeating-linear-gradient(90deg,var(--gold) 0 3px,transparent 3px 9px),linear-gradient(var(--gold),var(--gold));background-size:100% 3px,100% 2px;background-repeat:no-repeat;background-position:0 0,0 100%}
+#toast{position:absolute;left:10px;right:10px;bottom:10px;z-index:4;background:linear-gradient(#1b2466f2,#0c1238f2);border:2px solid var(--gold);
+  border-radius:16px;padding:12px 14px 12px 74px;font-size:clamp(16px,4.2vw,19px);line-height:1.35;min-height:76px;display:none}
+#toast.on{display:block}
+#toast svg{position:absolute;left:8px;top:50%;transform:translateY(-50%);width:58px;height:58px}
+#toast b{color:var(--gold)}
+/* dialog */
+#dialog{flex:none;position:relative;padding:10px 16px 8px;max-height:36vh;max-height:36dvh;overflow-y:auto;
+  background:linear-gradient(180deg,#0b1240f0,#070b2af8);border-top:2px solid var(--gold2);cursor:pointer;min-height:96px}
+#speaker{font-size:clamp(13px,3.4vw,16px);letter-spacing:.3em;text-transform:uppercase;color:var(--gold);margin-bottom:4px;min-height:1.2em}
+#speaker[data-s="THETIS"]{color:#7fe0d0} #speaker[data-s="ATHENA"]{color:#cfd8ff} #speaker[data-s="HERA"]{color:#f0b4ff}
+#speaker[data-s="APHRODITE"]{color:#ffb3c4} #speaker[data-s="POSEIDON"]{color:#7fc4ff}
+#text{font-size:clamp(18px,4.9vw,24px);line-height:1.42;text-shadow:0 0 10px rgba(242,200,75,.28)}
+#text[data-s="ZEUS"]{color:#fff3cf;text-shadow:0 0 12px rgba(242,200,75,.55),0 0 2px #000}
+#text .w{opacity:0;display:inline-block;animation:wordIn .45s ease-out forwards;white-space:pre}
+#text.done .w{animation:none;opacity:1}
+@keyframes wordIn{from{opacity:0;transform:translateY(5px);filter:blur(3px)}to{opacity:1;transform:none;filter:none}}
+#text.big{font-size:clamp(28px,8.5vw,44px);text-align:center;letter-spacing:.06em;color:#fff;text-shadow:0 0 18px var(--gold),0 0 4px #000}
+#text .sub{font-size:.72em;color:var(--dim);display:block;margin-top:6px}
+.title-h{font-size:clamp(30px,9.5vw,50px);text-align:center;letter-spacing:.1em;line-height:1.05;color:var(--gold);
+  text-shadow:0 2px 0 #6b4a0c,0 0 22px rgba(242,200,75,.6);margin:4px 0}
+.title-s{text-align:center;color:var(--dim);font-size:clamp(14px,3.8vw,18px);letter-spacing:.12em}
+/* actions */
+#actions{flex:none;display:flex;flex-wrap:wrap;gap:12px;padding:10px 12px calc(12px + var(--safe-b));justify-content:center;
+  background:#05081e;min-height:84px;align-content:center}
+.btn{flex:1 1 40%;min-height:60px;min-width:120px;padding:10px 14px;border-radius:14px;border:2px solid var(--gold);
+  background:linear-gradient(#3a2a08,#1d1504);color:#ffe9a8;font-family:var(--serif);font-size:clamp(17px,4.6vw,21px);letter-spacing:.04em;
+  cursor:pointer;box-shadow:0 3px 0 #6b4a0c,0 0 12px rgba(242,200,75,.18);touch-action:manipulation}
+.btn:active,.btn.held{transform:translateY(2px);box-shadow:0 1px 0 #6b4a0c}
+.btn.primary{background:linear-gradient(#6b4a0c,#3a2806);color:#fff6d0}
+.btn.alt{border-color:#7fb0ff;background:linear-gradient(#1a2c6e,#0e173f);color:#dfe8ff;box-shadow:0 3px 0 #0a1238}
+.btn.danger{border-color:#ff8a6a;background:linear-gradient(#5a1a10,#2c0c08);color:#ffd9cc}
+.btn.full{flex-basis:100%}
+.btn:disabled{opacity:.45}
+.btn.bolt{font-size:clamp(20px,5.6vw,26px);min-height:70px;animation:pulse 1.6s steps(6) infinite}
+@keyframes pulse{0%,100%{box-shadow:0 3px 0 #6b4a0c,0 0 10px rgba(242,200,75,.3)}50%{box-shadow:0 3px 0 #6b4a0c,0 0 28px rgba(242,200,75,.9)}}
+.meter{flex-basis:100%;height:18px;border:2px solid var(--gold2);border-radius:10px;overflow:hidden;background:#111;position:relative}
+.meter i{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,#b8860b,#ffe27a);width:0}
+.meter .zone{position:absolute;top:0;bottom:0;background:rgba(242,200,75,.35);border-left:2px solid var(--gold);border-right:2px solid var(--gold)}
+.meter .needle{position:absolute;top:-2px;bottom:-2px;width:8px;margin-left:-4px;background:#fff;box-shadow:0 0 8px #fff;border-radius:4px}
+.status{flex-basis:100%;text-align:center;font-size:clamp(15px,4vw,18px);color:var(--dim);min-height:1.3em}
+/* shake */
+#app.shake{animation:shake .5s steps(6) 1}
+@keyframes shake{0%{transform:translate(0)}20%{transform:translate(-6px,3px)}40%{transform:translate(5px,-4px)}60%{transform:translate(-4px,2px)}80%{transform:translate(3px,-2px)}100%{transform:translate(0)}}
+/* SVG stop-motion animations */
+.tw{animation:tw 2.4s steps(3) infinite} .tw2{animation:tw 3.1s steps(3) infinite .7s}
+@keyframes tw{50%{opacity:.25}}
+.flap{transform-box:fill-box;transform-origin:10% 90%;animation:flap .48s steps(3) infinite}
+@keyframes flap{0%,100%{transform:rotate(0)}50%{transform:rotate(-38deg) scaleY(.75)}}
+.swivel{transform-box:fill-box;transform-origin:50% 80%;animation:swivel 3.2s steps(4) infinite}
+@keyframes swivel{0%,40%{transform:rotate(0)}50%,70%{transform:rotate(-22deg)}80%,92%{transform:rotate(18deg)}}
+.snake{transform-box:fill-box;transform-origin:50% 100%;animation:snake .9s steps(3) infinite alternate}
+.snake:nth-child(2n){animation-duration:.7s;animation-delay:.2s}
+@keyframes snake{from{transform:rotate(-14deg)}to{transform:rotate(14deg)}}
+.bob{animation:bob 2.4s steps(5) infinite alternate} @keyframes bob{to{transform:translateY(-9px)}}
+.sway{transform-box:fill-box;transform-origin:50% 100%;animation:sway 1.8s steps(4) infinite alternate} @keyframes sway{from{transform:rotate(-4deg)}to{transform:rotate(4deg)}}
+.wave{animation:wave 2.2s steps(4) infinite alternate} @keyframes wave{to{transform:translateX(-26px)}}
+.scroll{animation:scroll 5s steps(20) infinite linear} @keyframes scroll{to{transform:translateX(-400px)}}
+.glowp{animation:glowp 1.4s steps(4) infinite alternate} @keyframes glowp{from{opacity:.45}to{opacity:1}}
+.flicker{animation:flick .5s steps(3) infinite alternate} @keyframes flick{from{opacity:.65;transform:scaleY(.92)}to{opacity:1}}
+.rattle{transform-box:fill-box;transform-origin:0 50%;animation:rat .16s steps(2) infinite} @keyframes rat{50%{transform:rotate(9deg)}}
+.tap{cursor:pointer}
+.tap-ring{fill:none;stroke:var(--gold);stroke-width:3;stroke-dasharray:8 6;animation:ring 1.2s steps(6) infinite}
+@keyframes ring{to{stroke-dashoffset:-28}}
+.lunge{transform-box:fill-box;transform-origin:80% 80%;animation:lunge .5s steps(3) 1 forwards}
+@keyframes lunge{50%{transform:translate(-6px,-4px) scale(1.18)}100%{transform:scale(1.12)}}
+.stone *{fill:#8d8a84 !important;stroke:#5c5a55 !important}
+.gone{opacity:0;transition:opacity .6s steps(4)}
+.hidden{display:none}
+@media (prefers-reduced-motion:reduce){*{animation-duration:0s !important;animation-iteration-count:1 !important}}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+@media (max-height:640px){#text{font-size:clamp(16px,4.4vw,20px)} #dialog{min-height:80px} .btn{min-height:56px}}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="top">
+    <div id="chap">Clash of the Titans</div>
+    <button id="hintBtn" class="icon-btn" hidden aria-label="Ask Bubo for a hint"></button>
+    <button id="muteBtn" class="icon-btn" aria-label="Sound on or off">🔊</button>
+  </div>
+  <div id="stage">
+    <svg id="svg" viewBox="0 0 400 400" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+      <defs>
+        <linearGradient id="gGold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff0a0"/><stop offset=".5" stop-color="#e2b03a"/><stop offset="1" stop-color="#8a5f10"/></linearGradient>
+        <linearGradient id="gMarble" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#cfc6b4"/><stop offset=".45" stop-color="#fbf7ee"/><stop offset="1" stop-color="#b9b09c"/></linearGradient>
+        <linearGradient id="gBronze" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f3c27a"/><stop offset=".5" stop-color="#b06a2c"/><stop offset="1" stop-color="#5e3412"/></linearGradient>
+        <radialGradient id="gShield" cx=".4" cy=".35" r=".7"><stop offset="0" stop-color="#fff6d8"/><stop offset=".55" stop-color="#d7a24e"/><stop offset="1" stop-color="#6b3c12"/></radialGradient>
+        <linearGradient id="gSea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a6f8f"/><stop offset="1" stop-color="#081c33"/></linearGradient>
+        <radialGradient id="gMoon" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fffbe8"/><stop offset=".7" stop-color="#f2e6b8"/><stop offset="1" stop-color="#f2e6b800"/></radialGradient>
+        <radialGradient id="gFire" cx=".5" cy=".7" r=".6"><stop offset="0" stop-color="#fff2a0"/><stop offset=".5" stop-color="#ff8a1c"/><stop offset="1" stop-color="#ff3a0000"/></radialGradient>
+        <radialGradient id="gGlow" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ffe9a0" stop-opacity=".9"/><stop offset="1" stop-color="#ffe9a0" stop-opacity="0"/></radialGradient>
+        <radialGradient id="gSpirit" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#e8fbff"/><stop offset="1" stop-color="#9fe6ff00"/></radialGradient>
+        <filter id="fGlow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      </defs>
+      <g id="world"></g>
+    </svg>
+    <div id="flash"></div>
+    <div id="card"><div class="num"></div><div class="rule"></div><div class="name"></div></div>
+    <div id="toast" role="status"></div>
+  </div>
+  <div id="dialog" aria-live="polite"><div id="speaker"></div><div id="text"></div></div>
+  <div id="actions"></div>
+</div>
+<script>
+/* =====================================================================
+   VOICE CONFIG + VOICE_LINES MANIFEST
+   ---------------------------------------------------------------------
+   Every spoken line has a stable id. To add recorded narration, put an
+   audio file named <id>.mp3 inside an "audio/" folder next to this file
+   (e.g. audio/olympus_01.mp3). If a file loads, it plays and the text is
+   revealed in time with it. If not, the game silently falls back to
+   dramatic text + synthesized thunder and drone.
+   - enabled:      set false to never look for recordings.
+   - base / ext:   folder and file extension (".mp3", ".ogg", ".m4a"...).
+   - giveUpAfter:  if this many files are missing before any file has loaded,
+                   stop looking (so a game with no recordings makes just one
+                   probe request, for audio/title_01.mp3). If you record only
+                   some lines, include title_01, or raise this number.
+   - Any line can override its file with an explicit  audio: "path"  field.
+   See VOICE_SCRIPT.md for the full recording script with delivery notes.
+   ===================================================================== */
+const VOICE_CONFIG = { enabled: true, base: "audio/", ext: ".mp3", giveUpAfter: 1, volume: 1.0 };
+
+const VOICE_LINES = {
+  // ---- Title ----
+  title_01:{speaker:"ZEUS",text:"Mortal, you stand at the gates of Olympus. Come. Witness the clash of gods and Titans.",note:"Slow, vast, welcoming. Let each sentence land like a footstep on marble.",fx:"shake"},
+  // ---- I. The Arena of Life ----
+  olympus_01:{speaker:"ZEUS",text:"Hear me, son of Danaë! The Fates have woven your thread, and I, Zeus, shall not let it fray.",note:"Proud father, booming. Rise on 'I, Zeus'.",fx:"shake"},
+  olympus_02:{speaker:"ZEUS",text:"Behold the Arena of Life. Here every mortal stands as a figure of clay, and here I move them as I will.",note:"Calm, absolute authority. Unhurried."},
+  olympus_03:{speaker:"ZEUS",text:"King Acrisius sealed my son and his mother in a chest and gave them to the sea. For that cruelty I loosed the Kraken, last of the Titans, and Argos is no more.",note:"Cold fury, then grim finality on 'Argos is no more'.",fx:"shake"},
+  olympus_04:{speaker:"ZEUS",text:"Yet the waves bore the child gently to Seriphos, and there he grew strong. Now set his figure in the Arena. Let his story begin.",note:"Softening to tenderness, then commanding on the last two sentences."},
+  olympus_05:{speaker:"ZEUS",text:"So. Perseus stands upon the sands of fate.",note:"Quiet satisfaction. A long pause after 'So.'"},
+  thetis_01:{speaker:"THETIS",text:"Mighty Zeus, you cherish your own blood, while my son Calibos crawls through the marshes like a beast!",note:"Sea goddess. Icy, wounded, venom under silk."},
+  olympus_06:{speaker:"ZEUS",text:"Your son destroyed my sacred winged horses, all but one. I gave his body the shape of his heart. The judgment stands!",note:"Thunderous. Hard stop on 'stands'.",fx:"shake"},
+  thetis_02:{speaker:"THETIS",text:"Then let your precious Perseus wake far from his gentle island, and learn how cruel the world can be.",note:"Sly, whispered menace. She moves his figure."},
+  olympus_07:{speaker:"ZEUS",text:"Thetis casts him into peril. Very well. He shall not go unarmed. Hera! Athena! Aphrodite! Bring forth your gifts!",note:"Builds from weary to a great summoning shout.",fx:"shake"},
+  olympus_08:{speaker:"ZEUS",text:"Take what the immortals offer, my son. Touch each gift and claim it as your own.",note:"Warm, generous, measured."},
+  hera_01:{speaker:"HERA",text:"From Hera, a shield of polished bronze. Keep its face as bright as still water.",note:"Queen of the gods. Regal, knowing; a hint of prophecy on 'still water'."},
+  athena_01:{speaker:"ATHENA",text:"From Athena, a helmet. Whoever wears it walks unseen, as the wind walks unseen through the reeds.",note:"Clear, wise, precise."},
+  aphrodite_01:{speaker:"APHRODITE",text:"From Aphrodite, a sword forged on Olympus. No mortal blade will ever stand against it.",note:"Warm, radiant, confident."},
+  olympus_09:{speaker:"ZEUS",text:"Armed by the gods. Now wake, Perseus, for you wake far from home.",note:"Grand send-off, gentle on the last phrase."},
+  // ---- II. Joppa ----
+  joppa_01:{speaker:"ZEUS",text:"Thetis has carried you to Joppa, to a theater long abandoned, where weeds grow between the marble seats.",note:"Storyteller cadence, slightly melancholy."},
+  joppa_02:{speaker:"ZEUS",text:"Here you meet Ammon, a poet, old and wise in the ways of men. Through him you learn the sorrow of this city.",note:"Fond, unhurried."},
+  joppa_03:{speaker:"ZEUS",text:"The Princess Andromeda is cursed. No man may wed her unless he answers a riddle set by Calibos, and every suitor who has failed has paid a terrible price.",note:"Darkening. Weight on 'terrible price'."},
+  joppa_04:{speaker:"ZEUS",text:"Each night, while she sleeps, a giant vulture carries her spirit away in a golden cage. Where? That, my son, you must discover.",note:"Mysterious. Let 'Where?' hang in the air."},
+  joppa_05:{speaker:"ZEUS",text:"To follow a creature of the sky, you need a steed of the sky. Go to the spring beyond the city, where the moonlight falls.",note:"Commanding counsel."},
+  // ---- III. Pegasus ----
+  pegasus_01:{speaker:"ZEUS",text:"There he drinks. Pegasus, last of my winged horses. Calibos destroyed his herd, and this one alone remains.",note:"Hushed awe, then grief on 'this one alone'."},
+  pegasus_02:{speaker:"ZEUS",text:"He is wild and proud. Seize his bridle and hold fast! Do not let him break free!",note:"Urgent, driving.",fx:"shake"},
+  pegasus_fail:{speaker:"ZEUS",text:"He tore free! Patience, my son. Approach him once more, and do not loosen your grip.",note:"Firm but encouraging."},
+  pegasus_03:{speaker:"ZEUS",text:"He yields! Pegasus is yours. Mount him, and ride the wind of night!",note:"Exultant. Big.",fx:"shake"},
+  pegasus_04:{speaker:"ZEUS",text:"There! The vulture rises from the palace with its golden cage. Spur Pegasus onward. Do not lose it among the clouds!",note:"Excited, pointing, rapid."},
+  pegasus_fly_fail:{speaker:"ZEUS",text:"The vulture slips into the clouds! Ride harder, and close the distance.",note:"Sharp, urging."},
+  pegasus_05:{speaker:"ZEUS",text:"Well flown! It sinks into the swamp of Calibos. Land softly, and in silence.",note:"Pleased, then dropping to a whisper."},
+  // ---- IV. The Swamp ----
+  swamp_01:{speaker:"ZEUS",text:"This is the marsh of Calibos: black water, twisted trees, and fires that give no warmth. How will you go forward?",note:"Low and ominous."},
+  swamp_open:{speaker:"ZEUS",text:"Hold! Would you march into your enemy's lair for all to see? Use the gift Athena gave you.",note:"A father's sharp rebuke, quickly softening."},
+  swamp_02:{speaker:"ZEUS",text:"Now you walk unseen. Watch. Calibos speaks to the captive spirit and gives her a new riddle for the next suitor. Mark every word.",note:"Conspiratorial whisper."},
+  swamp_03:{speaker:"ZEUS",text:"Three circles joined, he says. Two pale as the moon, taken from the deep sea. One hollow as a crown, dug from beneath the earth.",note:"Slow, rhythmic, as if reciting an incantation."},
+  swamp_04:{speaker:"ZEUS",text:"Ah! The helmet slips from your brow and is lost in the mire. Calibos sees you! Draw Aphrodite's sword!",note:"Sudden alarm. Explosive on 'Calibos sees you!'",fx:"shake"},
+  swamp_05:{speaker:"ZEUS",text:"Strike when the spark burns within the gold! Three true blows shall decide this.",note:"Battle command."},
+  duel_miss:{speaker:"ZEUS",text:"He turns your blow aside. Again! Watch the gold.",note:"Quick, clipped."},
+  swamp_06:{speaker:"ZEUS",text:"A mighty stroke! Calibos loses his hand, and with it his pearl ring. He howls and cowers in the mud.",note:"Triumphant, then a grim note.",fx:"shake"},
+  swamp_07:{speaker:"ZEUS",text:"He lies at your mercy. What will you do?",note:"Very quiet. A test."},
+  swamp_mercy:{speaker:"ZEUS",text:"You stay your sword and bid him lift his curse. Mercy, my son, is the rarest of all weapons.",note:"Deep pride, warm."},
+  swamp_wrath:{speaker:"ZEUS",text:"You drive him howling into the dark. He escapes, and he will not forget.",note:"Neutral, faintly troubled."},
+  swamp_08:{speaker:"ZEUS",text:"Take the hand and its ring. And heed me: Thetis watches over her son, and the wrath of a goddess runs deeper than the sea.",note:"Prophetic warning, weighty.",fx:"shake"},
+  // ---- V. The Riddle ----
+  riddle_01:{speaker:"ZEUS",text:"Morning breaks over Joppa. Queen Cassiopeia presents her daughter once more and asks: is there any man who dares to answer?",note:"Ceremonial."},
+  riddle_02:{speaker:"ZEUS",text:"Step forward, prince of Argos. Remember the words of the marsh: two moons from the sea, one crown from the earth. What can it be?",note:"Encouraging, then curious and sly on the question."},
+  riddle_wrong:{speaker:"ZEUS",text:"No. Think! Two pearls from the deep, a band of gold from the earth. What holds them together?",note:"Patient teacher."},
+  riddle_03:{speaker:"ZEUS",text:"A ring! Two pearls in a circle of gold. And there, upon the hand of Calibos himself, is the proof. The curse is broken. Andromeda shall be your bride!",note:"Triumphant crescendo.",fx:"shake"},
+  // ---- VI. The Temple of Thetis ----
+  temple_01:{speaker:"ZEUS",text:"The wedding gathers in the temple of Thetis. But Queen Cassiopeia, swollen with pride, declares her daughter more beautiful than Thetis herself.",note:"Foreboding. Disapproving on 'swollen with pride'."},
+  temple_02:{speaker:"ZEUS",text:"Foolish queen! In a goddess's own temple! Look. The great statue of Thetis stirs.",note:"Alarmed, then hushed.",fx:"shake"},
+  thetis_03:{speaker:"THETIS",text:"Vain mortal! For your boast, and for my son's wound, in thirty days Andromeda shall be given to the Kraken, or Joppa shall be destroyed!",note:"Booming through stone. Cold and immense.",fx:"shake"},
+  temple_03:{speaker:"ZEUS",text:"And in that same dark hour, the men of Calibos capture Pegasus. Without wings, how will you face what is coming?",note:"Grave, sorrowful."},
+  temple_04:{speaker:"ZEUS",text:"Only the Stygian Witches know how the Kraken may be defeated. Their lair lies far beyond the edge of the known world.",note:"Ancient secret, low."},
+  // ---- VII. Bubo ----
+  bubo_01:{speaker:"ZEUS",text:"Athena! My son has lost your helmet. Give him your owl, Bubo, wisest of birds, to guide him.",note:"Command to a daughter; firm, kind."},
+  athena_02:{speaker:"ATHENA",text:"My Bubo? I will not part with him, Father. But Hephaestus shall forge a likeness, all of gold, with a mind of gears.",note:"Proud refusal, then clever compromise."},
+  bubo_02:{speaker:"ZEUS",text:"So be it! See how Hephaestus's work flies down from Olympus. Wake him, Perseus!",note:"Delighted, ringing."},
+  bubo_03:{speaker:"ZEUS",text:"Bubo clicks and whirs. He cannot speak as mortals do, so I shall give his gears a voice. Whenever you are lost, call upon him.",note:"Amused, fond, a little playful."},
+  // ---- VIII. The Stygian Witches ----
+  witch_01:{speaker:"ZEUS",text:"Through mist and stone, Bubo leads you to the lair of the Stygian Witches: three blind sisters who share a single eye.",note:"Creeping, eerie."},
+  witch_02:{speaker:"ZEUS",text:"They answer no one freely. How will you win their knowledge?",note:"Challenging."},
+  witch_kind:{speaker:"ZEUS",text:"They only cackle and pass the eye along. Courtesy will not move them. You must take what they guard.",note:"Wry."},
+  witch_03:{speaker:"ZEUS",text:"The eye passes from hand to hand. When it flies between the sisters, call out to Bubo, and he will snatch it!",note:"Tense instruction."},
+  witch_fail:{speaker:"ZEUS",text:"Too slow! The sisters clutch their eye. Watch, and try once more.",note:"Brisk, encouraging."},
+  witch_04:{speaker:"ZEUS",text:"Bubo has the eye! Now they must answer. The Kraken can be destroyed by one thing only: the head of the Gorgon Medusa, whose gaze turns every living thing to stone.",note:"The key revelation. Slow and heavy on 'stone'.",fx:"shake"},
+  witch_05:{speaker:"ZEUS",text:"Medusa dwells on the Isle of the Dead, across the River Styx, at the very edge of the Underworld. And now, the eye. You promised to return it.",note:"Grim, then a pointed reminder."},
+  witch_honor:{speaker:"ZEUS",text:"You place the eye back in their withered hands. A promise kept is honor kept, even with witches.",note:"Approving."},
+  witch_toss:{speaker:"ZEUS",text:"You toss it into the dark, and they scrabble, shrieking, among the stones. Clever. But not honorable.",note:"Dry disapproval."},
+  // ---- IX. The Styx ----
+  styx_01:{speaker:"ZEUS",text:"Before you flows the River Styx, black and silent. Charon, ferryman of the dead, waits with his pole.",note:"Funereal, hushed."},
+  styx_02:{speaker:"ZEUS",text:"No one crosses without payment. Place a coin in his bony hand.",note:"Simple, solemn."},
+  styx_03:{speaker:"ZEUS",text:"The boat slides through the mist without a ripple. Do not trail your hand in this water, my son.",note:"Protective whisper."},
+  // ---- X. Dioskilos ----
+  dog_01:{speaker:"ZEUS",text:"Dioskilos! Medusa's two-headed hound guards the gate. Each head strikes in turn. Meet whichever one lunges!",note:"Sudden alarm, battle cry.",fx:"shake"},
+  dog_miss:{speaker:"ZEUS",text:"The other head! Watch which jaws open.",note:"Quick."},
+  dog_02:{speaker:"ZEUS",text:"The great hound falls. The way into the temple lies open.",note:"Relief, then dread."},
+  // ---- XI. Medusa ----
+  medusa_01:{speaker:"ZEUS",text:"Firelight flickers within. Medusa was once a beautiful priestess. Now her hair is serpents, her body a serpent's coil, and her eyes are death to all who meet them.",note:"Slow, dreadful storytelling."},
+  medusa_02:{speaker:"ZEUS",text:"Hear her rattle in the dark. She carries a bow, and her arrows fly true. How will you enter?",note:"Tense."},
+  medusa_charge:{speaker:"ZEUS",text:"An arrow streaks from the dark and glances off your shield! Boldness alone will not serve you here. Choose with wisdom.",note:"Alarm, then counsel.",fx:"shake"},
+  medusa_03:{speaker:"ZEUS",text:"Silent as smoke, you slip from pillar to pillar. She is near. Very near. Now, my son, how will you look upon her?",note:"Whisper, slowing, almost holding breath."},
+  stone_01:{speaker:"ZEUS",text:"No! You met her gaze, and cold stone creeps over your limbs!",note:"Anguished shout.",fx:"shake"},
+  stone_02:{speaker:"ZEUS",text:"Yet the Fates are not done with you. I, Zeus, turn back the moment. Rise, and try again!",note:"Mighty, defiant of fate.",fx:"shake"},
+  medusa_04:{speaker:"ZEUS",text:"Wise! Hera's polished shield shows her reflection, and a reflection cannot harm you. Strike only when she is close behind you!",note:"Praise, then precise instruction."},
+  medusa_early:{speaker:"ZEUS",text:"Too soon! She slithers back into the shadows. Wait until she is close.",note:"Quick, restraining."},
+  medusa_05:{speaker:"ZEUS",text:"Now! One stroke of Aphrodite's sword, and the head of Medusa is yours. Wrap it in your cloak, and never look upon it.",note:"Climactic, then grave warning.",fx:"shake"},
+  medusa_06:{speaker:"ZEUS",text:"Her blood is so deadly it eats away Hera's shield. Let it go. Its work is done.",note:"Somber."},
+  scorp_01:{speaker:"ZEUS",text:"But Calibos has followed you! He slashes your cloak, Medusa's blood spills on the sand, and from it giant scorpions rise!",note:"Horror, rapid.",fx:"shake"},
+  scorp_02:{speaker:"ZEUS",text:"Strike them down! Two blows for each.",note:"Battle command."},
+  scorp_03:{speaker:"ZEUS",text:"The scorpions are no more. Calibos, cruel to the last, lashes out with his whip. Your sword answers him, and his wickedness is ended.",note:"Weighty, final."},
+  // ---- XII. The Kraken ----
+  kraken_01:{speaker:"ZEUS",text:"You turn toward Joppa with the Gorgon's head. But Pegasus is still a prisoner of Calibos's men. Send Bubo to set him free!",note:"Urgent."},
+  kraken_02:{speaker:"ZEUS",text:"Faithful Bubo flies! But you, my son, are weary beyond all strength. You stagger into the old theater of Joppa and fall upon the stones.",note:"Tender sorrow."},
+  thetis_04:{speaker:"THETIS",text:"Great Zeus, on Earth it is the eve of the longest day. The thirty days are done.",note:"Patient, triumphant cruelty."},
+  kraken_03:{speaker:"ZEUS",text:"Release the Kraken!",note:"THE line. Enormous. Commanding. Let it echo; a beat of silence before and after.",fx:"shake"},
+  kraken_04:{speaker:"ZEUS",text:"Your clay figure lies fallen in the Arena, my son. Will you rise by your own will alone, or call upon your father?",note:"Quiet, intimate, a father's question."},
+  kraken_alone:{speaker:"ZEUS",text:"Proud heart! You stagger and fall again. Even the son of Zeus may ask for help.",note:"Gentle chiding."},
+  kraken_05:{speaker:"ZEUS",text:"I hear you. And I set your figure upright in the Arena of Life. Your strength returns, every breath of it. Rise, Perseus!",note:"Rising thunder of love and power.",fx:"shake"},
+  kraken_06:{speaker:"ZEUS",text:"At the sea cliffs, Andromeda is chained to the rock. The waters boil. The Kraken rises!",note:"Building terror, peak on 'rises'.",fx:"shake"},
+  kraken_07:{speaker:"ZEUS",text:"Bubo circles the monster's head to distract it, and Pegasus brings you down from the clouds! Unveil the Gorgon's head when the Kraken's eyes meet yours!",note:"Breathless battle narration."},
+  kraken_early:{speaker:"ZEUS",text:"Not yet! It does not look at you. Wait for its eyes.",note:"Sharp."},
+  kraken_late:{speaker:"ZEUS",text:"Its claw sweeps you into the sea! But Bubo dives and brings back the head. Again!",note:"Shock, then urgency."},
+  kraken_08:{speaker:"ZEUS",text:"Behold! The Kraken meets the Gorgon's gaze. Stone creeps over the last of the Titans, and it crumbles into the sea!",note:"Awestruck, colossal.",fx:"shake"},
+  kraken_09:{speaker:"ZEUS",text:"Cast the head into the deep, where it will harm no one. Then free Andromeda from her chains!",note:"Victorious command."},
+  // ---- Ending ----
+  end_01:{speaker:"ZEUS",text:"Andromeda is free, and Pegasus rises from the waves. Joppa sings your name, Perseus.",note:"Joyful, broad."},
+  end_02:{speaker:"ZEUS",text:"So Perseus and Andromeda are wed. They will live long, rule wisely, and fill their halls with children.",note:"Benediction."},
+  end_mercy:{speaker:"ZEUS",text:"You showed mercy, kept your word, and were humble enough to call upon the gods. Hear me, all Olympus: no god shall seek vengeance against them. This I forbid!",note:"Supreme decree. Biggest voice of the game.",fx:"shake"},
+  end_mercy2:{speaker:"ZEUS",text:"And so that no age forgets, I set them in the heavens: Perseus, Andromeda, Pegasus, and Cassiopeia, shining for all time.",note:"Awe and tenderness, slow."},
+  end_hard:{speaker:"ZEUS",text:"You won by courage and by strength. Yet a hero who wins without mercy, without his word, without asking help, wins only half a crown.",note:"Stern, loving counsel."},
+  end_hard2:{speaker:"ZEUS",text:"Still, I set you both among the stars, Perseus and Andromeda, so the night will remember. Return, and perhaps more stars will shine.",note:"Kindly, with an invitation."},
+  end_03:{speaker:"ZEUS",text:"Fortune favors the brave, my son. And the brave, in their turn, become legend.",note:"Final line. Quiet, immense, warm. Let it ring."}
+};
+
+/* Bubo's hints (Zeus gives voice to Bubo's clicks). Optional recordings: audio/hint_<key>.mp3 */
+const HINTS = {
+  witches:"When the eye glows gold in the air between two sisters, call Bubo!",
+  styx:"Tap the coin to pay Charon.",
+  dog:"Look for the head with glowing red eyes and open jaws. Strike that side.",
+  medusa_enter:"Shadows hide you. Open doors do not.",
+  medusa_look:"Never meet her eyes. Hera said to keep the shield as bright as still water...",
+  medusa_strike:"Wait until the rim of the shield blazes gold. Then she is close enough. Strike!",
+  scorp:"Tap each scorpion twice. Big, bold taps!",
+  kraken_send:"Tap Send Bubo to free Pegasus.",
+  kraken_call:"A son may call upon his father.",
+  kraken:"Watch the Kraken's eyes. When they blaze gold and look your way, unveil the head!",
+  none:"Bubo whirs happily. Tap Continue, and Zeus will guide you."
+};
+for (const k in HINTS) VOICE_LINES["hint_"+k] = {speaker:"ZEUS",text:/^Bubo whirs\b/.test(HINTS[k]) ? HINTS[k] : "Bubo whirs: "+HINTS[k],note:"Bubo's hint, given voice by Zeus. Light, amused, helpful.",hint:true};
+</script>
+<script>
+"use strict";
+/* ============================ AUDIO (Web Audio) ============================ */
+const AU = { ctx:null, master:null, rev:null, muted:false, drone:null };
+try { AU.muted = localStorage.getItem("cott_muted")==="1"; } catch(e){}
+function initAudio(){
+  if (AU.ctx){ if (AU.ctx.state==="suspended") AU.ctx.resume().catch(()=>{}); unlockVoice(); return; }
+  const C = window.AudioContext || window.webkitAudioContext; if (!C) return;
+  const c = new C(); AU.ctx = c;
+  AU.master = c.createGain(); AU.master.gain.value = AU.muted?0:0.85; AU.master.connect(c.destination);
+  AU.bus = c.createGain(); AU.bus.gain.value = VOICE.playing?DUCK:1; AU.bus.connect(AU.master); /* SFX bus: ducked under voice */
+  const len = Math.floor(c.sampleRate*3.2), ir = c.createBuffer(2,len,c.sampleRate);
+  for (let ch=0; ch<2; ch++){ const d=ir.getChannelData(ch); for (let i=0;i<len;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/len,2.6); }
+  AU.rev = c.createConvolver(); AU.rev.buffer = ir; const rg=c.createGain(); rg.gain.value=.55; AU.rev.connect(rg); rg.connect(AU.bus);
+  const n = c.createBuffer(1,c.sampleRate*2,c.sampleRate), nd=n.getChannelData(0); for (let i=0;i<nd.length;i++) nd[i]=Math.random()*2-1; AU.white=n;
+  const b = c.createBuffer(1,c.sampleRate*4,c.sampleRate), bd=b.getChannelData(0); let last=0;
+  for (let i=0;i<bd.length;i++){ const w=Math.random()*2-1; last=(last+0.02*w)/1.02; bd[i]=last*3.5; } AU.brown=b;
+  if (c.state==="suspended") c.resume().catch(()=>{});
+  unlockVoice();
+}
+function setMuted(m){ AU.muted=m; try{localStorage.setItem("cott_muted",m?"1":"0");}catch(e){}
+  if (AU.master) AU.master.gain.setTargetAtTime(m?0:0.85, AU.ctx.currentTime, .05);
+  for (const k in VOICE.els) VOICE.els[k].muted = m;
+  $("#muteBtn").textContent = m?"🔇":"🔊"; }
+function route(node, wet){ node.connect(AU.bus); if (wet){ const g=AU.ctx.createGain(); g.gain.value=wet; node.connect(g); g.connect(AU.rev);} }
+function envG(t,a,peak,d){ const g=AU.ctx.createGain(); g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(Math.max(peak,0.0002),t+a); g.gain.exponentialRampToValueAtTime(0.0001,t+a+d); return g; }
+function tone(type,f,t,dur,peak,wet=.2,f2){ const c=AU.ctx,o=c.createOscillator(); o.type=type; o.frequency.setValueAtTime(f,t);
+  if (f2) o.frequency.exponentialRampToValueAtTime(f2,t+dur); const g=envG(t,.01,peak,dur); o.connect(g); route(g,wet); o.start(t); o.stop(t+dur+.05); }
+function noise(buf,t,dur,peak,filt,fq,wet=.2,q=1,a=.01,fq2){ const c=AU.ctx,s=c.createBufferSource(); s.buffer=buf; s.loop=true;
+  const f=c.createBiquadFilter(); f.type=filt; f.frequency.setValueAtTime(fq,t); f.Q.value=q; if (fq2) f.frequency.exponentialRampToValueAtTime(fq2,t+dur);
+  const g=envG(t,a,peak,dur); s.connect(f); f.connect(g); route(g,wet); s.start(t, Math.random()); s.stop(t+a+dur+.1); return g; }
+const SFX = {
+  ok(){ return AU.ctx && AU.ctx.state!=="closed"; },
+  thunder(p=1){ if(!this.ok())return; const t=AU.ctx.currentTime+.02;
+    noise(AU.white,t,.18*p,.5*p,"highpass",1800,.5);
+    noise(AU.brown,t+.05,2.6+p*1.4,.9*p,"lowpass",260,.7,.7,.08,70);
+    noise(AU.brown,t+.5+Math.random()*.4,1.8,.5*p,"lowpass",160,.7,.7,.3,60); },
+  crack(){ if(!this.ok())return; const t=AU.ctx.currentTime; noise(AU.white,t,.09,.6,"highpass",3000,.4); noise(AU.white,t+.06,.12,.4,"bandpass",1200,.4); },
+  droneOn(){ if(!this.ok()||AU.drone)return; const c=AU.ctx,t=c.currentTime,g=c.createGain(); g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(.09,t+.9);
+    const f=c.createBiquadFilter(); f.type="lowpass"; f.frequency.value=320; f.connect(g); route(g,.6);
+    const os=[[55,"sawtooth"],[55.4,"sawtooth"],[82.4,"triangle"],[41.2,"sine"]].map(([fr,ty])=>{const o=c.createOscillator(); o.type=ty; o.frequency.value=fr; o.connect(f); o.start(t); return o;});
+    const l=c.createOscillator(), lg=c.createGain(); l.frequency.value=.18; lg.gain.value=120; l.connect(lg); lg.connect(f.frequency); l.start(t); os.push(l);
+    AU.drone={g,os}; },
+  droneOff(){ if(!AU.drone)return; const {g,os}=AU.drone, t=AU.ctx.currentTime; g.gain.cancelScheduledValues(t); g.gain.setValueAtTime(Math.max(g.gain.value,.0002),t); g.gain.exponentialRampToValueAtTime(0.0001,t+1.4); os.forEach(o=>o.stop(t+1.5)); AU.drone=null; },
+  harp(){ if(!this.ok())return; const t=AU.ctx.currentTime; [523,659,784,988,1175].forEach((f,i)=>tone("triangle",f,t+i*.07,.9,.12,.5)); },
+  chime(){ if(!this.ok())return; const t=AU.ctx.currentTime; [880,1320,1760].forEach((f,i)=>tone("sine",f,t+i*.05,1.2,.15,.6)); },
+  flap(){ if(!this.ok())return; const t=AU.ctx.currentTime; noise(AU.white,t,.22,.35,"bandpass",500,.15,.8,.04,180); },
+  click(){ if(!this.ok())return; const t=AU.ctx.currentTime; [0,.07,.13].forEach(d=>tone("square",2200+Math.random()*900,t+d,.03,.12,.1)); },
+  whir(){ if(!this.ok())return; const t=AU.ctx.currentTime; tone("sawtooth",180,t,.5,.08,.2,900); tone("square",3000,t+.5,.04,.08,.1); tone("square",2400,t+.58,.04,.08,.1); },
+  clang(){ if(!this.ok())return; const t=AU.ctx.currentTime; [523,1187,1663,2530,3400].forEach((f,i)=>tone("sine",f*(.98+Math.random()*.04),t,.7-i*.08,.16,.4)); noise(AU.white,t,.06,.4,"highpass",4000,.2); },
+  whoosh(){ if(!this.ok())return; noise(AU.white,AU.ctx.currentTime,.3,.3,"bandpass",900,.2,1.5,.08,3000); },
+  hiss(){ if(!this.ok())return; noise(AU.white,AU.ctx.currentTime,.9,.25,"highpass",4500,.3,1,.15); },
+  rattle(){ if(!this.ok())return; const t=AU.ctx.currentTime; for(let i=0;i<14;i++) noise(AU.white,t+i*.045,.03,.22,"bandpass",5200,.15,3,.005); },
+  growl(){ if(!this.ok())return; const t=AU.ctx.currentTime; tone("sawtooth",90,t,.6,.18,.3,60); noise(AU.brown,t,.6,.5,"lowpass",400,.3); },
+  roar(){ if(!this.ok())return; const t=AU.ctx.currentTime; tone("sawtooth",70,t,2,.25,.6,42); tone("sawtooth",104,t,1.8,.15,.6,50); noise(AU.brown,t,2.2,.9,"lowpass",700,.6,.8,.2,120); },
+  sea(d=4){ if(!this.ok())return; noise(AU.brown,AU.ctx.currentTime,d,.45,"lowpass",900,.3,.6,1.2,300); },
+  splash(){ if(!this.ok())return; noise(AU.white,AU.ctx.currentTime,.7,.5,"lowpass",3000,.4,.7,.02,300); },
+  coin(){ if(!this.ok())return; const t=AU.ctx.currentTime; tone("square",1975,t,.08,.08,.3); tone("sine",2637,t+.08,.6,.14,.5); },
+  stone(){ if(!this.ok())return; const t=AU.ctx.currentTime; noise(AU.brown,t,2.2,.8,"bandpass",300,.4,2,.1,120); for(let i=0;i<8;i++) noise(AU.white,t+i*.22,.05,.25,"bandpass",900+Math.random()*900,.2,4); },
+  hit(){ if(!this.ok())return; const t=AU.ctx.currentTime; tone("sine",160,t,.18,.4,.2,50); noise(AU.white,t,.08,.4,"lowpass",1600,.2); },
+  boing(){ if(!this.ok())return; tone("triangle",300,AU.ctx.currentTime,.25,.15,.2,160); },
+  cackle(){ if(!this.ok())return; const t=AU.ctx.currentTime; for(let i=0;i<6;i++) tone("sawtooth",700+(i%2)*200,t+i*.12,.09,.06,.3,500); },
+  fanfare(){ if(!this.ok())return; const t=AU.ctx.currentTime; [[392,0,.25],[523,.25,.25],[659,.5,.25],[784,.75,.7],[659,1.5,.25],[784,1.75,1.2]].forEach(([f,d,l])=>{tone("sawtooth",f,t+d,l,.09,.5);tone("triangle",f/2,t+d,l,.12,.4);}); }
+};
+
+/* ============================ VOICE RECORDINGS ============================ */
+const VOICE = { current:null, misses:0, anyLoaded:false, cache:{}, els:{}, tok:{}, unlocked:false, playing:0 };
+const DUCK = 0.3;   /* SFX/drone level while a voice line plays */
+const SILENT_MP3 = "data:audio/mpeg;base64,SUQzBAAAAAAAIlRTU0UAAAAOAAADTGF2ZjYxLjcuMTAzAAAAAAAAAAAAAAD/83DAAAAAAAAAAAAASW5mbwAAAA8AAAAGAAADKQBaWlpaWlpaWlpaWlpaWlpae3t7e3t7e3t7e3t7e3t7e3ucnJycnJycnJycnJycnJycvb29vb29vb29vb29vb29vb3e3t7e3t7e3t7e3t7e3t7e3v////////////////////8AAAAATGF2YzYxLjE5AAAAAAAAAAAAAAAAJAKjAAAAAAAAAymyjycdAAAAAAAAAAAAAAAAAP/zQMQAAAADSAAAAABMQU1FMy4xMDBVVVVVVVVVVVVVTEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//NCxFsAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//NAxKQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVX/80LEowAAA0gAAAAAVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVX/80DEpAAAA0gAAAAAVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQsSjAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVQ==";
+function voicePath(id){ const L=VOICE_LINES[id]; return (L && L.audio) || (VOICE_CONFIG.base + id + VOICE_CONFIG.ext); }
+function duck(on){ VOICE.playing = Math.max(0, VOICE.playing + (on?1:-1));
+  if (AU.bus) AU.bus.gain.setTargetAtTime(VOICE.playing?DUCK:1, AU.ctx.currentTime, VOICE.playing?.06:.35); }
+/* one reusable element per channel ("line", "hint"); iOS only lets an element play
+   programmatically after it has been played once inside a user gesture. */
+function voiceEl(ch){ let a=VOICE.els[ch]; if (a) return a;
+  a = VOICE.els[ch] = new Audio(); a.preload="auto"; a.setAttribute("playsinline",""); a.muted=AU.muted; a._duck=false;
+  const up=()=>{ if (!a._duck && a._voiced){ a._duck=true; duck(true);} }, down=()=>{ if (a._duck){ a._duck=false; duck(false);} };
+  a.addEventListener("playing",up); a.addEventListener("pause",down); a.addEventListener("ended",down); a.addEventListener("emptied",down); a.addEventListener("error",down);
+  return a; }
+function unlockVoice(){ if (VOICE.unlocked || !VOICE_CONFIG.enabled) return; VOICE.unlocked=true;
+  for (const ch of ["line","hint","quick"]){ const a=voiceEl(ch); if (a.src && a._voiced) continue;
+    a._voiced=false; a.src=SILENT_MP3; const p=a.play(); if (p) p.then(()=>{ if(!a._voiced) a.pause(); }).catch(()=>{}); } }
+function loadVoice(id, ch="line"){
+  if (!VOICE_CONFIG.enabled) return Promise.resolve(null);
+  if (!VOICE.anyLoaded && VOICE.misses >= VOICE_CONFIG.giveUpAfter) return Promise.resolve(null);
+  if (VOICE.cache[id]==="missing") return Promise.resolve(null);
+  const a = voiceEl(ch), tok = VOICE.tok[ch] = (VOICE.tok[ch]||0)+1;
+  try{ a.pause(); }catch(e){}
+  return new Promise(res=>{ let done=false;
+    const ok=()=>fin(true), bad=()=>fin(false);
+    const fin = good=>{ if(done)return; done=true; clearTimeout(to); a.removeEventListener("loadedmetadata",ok); a.removeEventListener("error",bad);
+      if (VOICE.tok[ch]!==tok) return res(null);              /* superseded by a newer line */
+      if (good){ VOICE.anyLoaded=true; VOICE.misses=0; res(a); }
+      else { VOICE.cache[id]="missing"; VOICE.misses++; res(null); } };
+    /* first probe gets longer on slow hosts; metadata (not canplaythrough) so iOS, which ignores preload, still resolves */
+    const to = setTimeout(bad, VOICE.anyLoaded ? 5000 : 8000);
+    a.addEventListener("loadedmetadata",ok); a.addEventListener("error",bad);
+    a._voiced=true; a.muted=AU.muted; a.volume=VOICE_CONFIG.volume; a.src = voicePath(id); a.load();
+  });
+}
+function stopVoice(all){ if (VOICE.current){ try{VOICE.current.pause();}catch(e){} VOICE.current=null; }
+  if (all) for (const ch of ["hint","quick"]) if (VOICE.els[ch]){ try{VOICE.els[ch].pause();}catch(e){} } }
+
+/* ============================ UI HELPERS ============================ */
+const $ = s=>document.querySelector(s);
+const sleep = ms=>new Promise(r=>setTimeout(r,ms));
+let RUN = 0; class Abort extends Error{}
+const chk = g=>{ if (g!==RUN) throw new Abort(); };
+const S = {};
+function resetState(){ Object.assign(S,{mercy:false,honor:false,humble:false,retries:0,stoned:0,hints:0,hintKey:null,bubo:false,gifts:{}}); }
+const world = ()=>$("#world");
+function scene(svg){ world().innerHTML = svg; }
+function chapter(t){ $("#chap").textContent = t; }
+function clearActions(){ $("#actions").innerHTML=""; }
+function btn(label, opts={}){
+  const b=document.createElement("button"); b.className="btn "+(opts.cls||""); b.type="button"; b.innerHTML=label;
+  if (opts.def) b.dataset.default="1"; if (opts.key) b.dataset.key=opts.key;
+  if (opts.onTap) b.addEventListener("click",e=>{ initAudio(); b.blur(); opts.onTap(e); });
+  $("#actions").appendChild(b); return b;
+}
+function flash(){ const f=$("#flash"); f.classList.remove("on"); void f.offsetWidth; f.classList.add("on"); }
+function shake(){ const a=$("#app"); a.classList.remove("shake"); void a.offsetWidth; a.classList.add("shake"); }
+function bolt(p=1){ flash(); shake(); SFX.crack(); SFX.thunder(p); }
+
+function renderWords(text, total){
+  const el=$("#text"); el.classList.remove("done","big"); el.innerHTML="";
+  const words=text.split(/(\s+)/).filter(w=>w.length);
+  const n=words.filter(w=>w.trim()).length || 1; let i=0;
+  for (const w of words){ if (!w.trim()){ el.appendChild(document.createTextNode(" ")); continue; }
+    const s=document.createElement("span"); s.className="w"; s.textContent=w; s.style.animationDelay=Math.round(i/n*total)+"ms"; el.appendChild(s); i++; }
+  $("#dialog").scrollTop=0;
+}
+function setSpeaker(sp){ const s=$("#speaker"); s.textContent = sp ? (sp==="ZEUS"?"⚡ Zeus":sp.charAt(0)+sp.slice(1).toLowerCase()) : ""; s.dataset.s=sp||""; $("#text").dataset.s=sp||""; }
+function plain(html, speaker=""){ setSpeaker(speaker); const el=$("#text"); el.classList.add("done"); el.classList.remove("big"); el.innerHTML=html; }
+
+/* say(id): reveal a voiced line; returns when the player continues. */
+let advanceFn = null;
+async function say(id, opts={}){
+  const g=RUN; const L=VOICE_LINES[id]; if(!L) throw new Error("Missing line "+id);
+  clearActions(); setSpeaker(L.speaker); $("#text").innerHTML=""; 
+  const voice = await loadVoice(id); chk(g);
+  const god = L.speaker!=="";
+  let total = Math.min(5200, Math.max(900, L.text.length*30));
+  if (L.fx==="shake"){ bolt(opts.power||1.1); } else if (!voice){ if (L.speaker==="ZEUS") SFX.thunder(.35); else SFX.harp(); }
+  if (god) SFX.droneOn();
+  if (voice){ const d=isFinite(voice.duration)&&voice.duration>0?voice.duration:total/1000; total = Math.max(600,d*900); voice.volume=VOICE_CONFIG.volume; voice.muted=AU.muted; VOICE.current=voice; try{voice.currentTime=0;}catch(e){} voice.play().catch(()=>{}); }
+  renderWords(L.text, total);
+  const textEl=$("#text"); let revealed=false;
+  const revealTimer=setTimeout(()=>{revealed=true;}, total+450);
+  await new Promise(res=>{
+    const go=()=>{ if (!revealed){ revealed=true; clearTimeout(revealTimer); textEl.classList.add("done"); return; }
+      advanceFn=null; res(); };
+    advanceFn=go;
+    btn(opts.label||"Continue ▸",{cls:"primary full",def:true,onTap:go});
+  });
+  chk(g); stopVoice(); if (!opts.keepDrone) SFX.droneOff();
+}
+$("#dialog").addEventListener("click",()=>{ initAudio(); if (advanceFn) advanceFn(); });
+
+/* choose: buttons -> resolves with key */
+function choose(list, prompt){
+  const g=RUN; clearActions();
+  if (prompt) { const st=document.createElement("div"); st.className="status"; st.textContent=prompt; $("#actions").appendChild(st); }
+  return new Promise(res=>{ list.forEach((o,i)=>btn(o.label,{cls:(o.cls||"")+(list.length===1?" full":""),key:String(i+1),def:list.length===1,onTap:()=>{ if(g===RUN){ clearActions(); res(o.k);} }})); });
+}
+/* tapTarget: wait for a tap on an SVG element with [data-act=name] or an equivalent button */
+function tapTarget(name, label){
+  const g=RUN; clearActions();
+  return new Promise(res=>{
+    const done=()=>{ if(g!==RUN)return; world().removeEventListener("click",h); clearActions(); res(); };
+    const h=e=>{ const t=e.target.closest("[data-act]"); if (t && t.dataset.act===name){ initAudio(); done(); } };
+    world().addEventListener("click",h);
+    if (label) btn(label,{cls:"primary full",def:true,onTap:done});
+  });
+}
+function card(num, name){ const g=RUN; const c=$("#card"); c.querySelector(".num").textContent=num; c.querySelector(".name").textContent=name; c.classList.add("on"); chapter(num+" · "+name);
+  clearActions(); setSpeaker(""); $("#text").innerHTML="";
+  return new Promise(res=>{ let t; const end=()=>{ clearTimeout(t); c.removeEventListener("click",end); c.classList.remove("on"); advanceFn=null; res(); };
+    t=setTimeout(end,1900); c.addEventListener("click",end); advanceFn=end; }).then(()=>chk(g)); }
+
+/* hint button (Bubo) */
+function showHint(){
+  initAudio(); SFX.whir(); setTimeout(()=>SFX.click(),450); S.hints++;
+  const key = HINTS[S.hintKey] ? S.hintKey : "none";
+  const t=$("#toast"); t.innerHTML = buboIcon()+VOICE_LINES["hint_"+key].text.replace(/^Bubo whirs:?/,m=>"<b>"+m+"</b>"); /* toast = spoken line */ t.classList.add("on");
+  loadVoice("hint_"+key,"hint").then(a=>{ if(a){ a.muted=AU.muted; a.play().catch(()=>{}); } });
+  clearTimeout(showHint.t); showHint.t=setTimeout(()=>t.classList.remove("on"),6500);
+}
+$("#toast").addEventListener("click",()=>$("#toast").classList.remove("on"));
+$("#hintBtn").addEventListener("click",showHint);
+$("#muteBtn").addEventListener("click",()=>{ initAudio(); setMuted(!AU.muted); });
+document.addEventListener("pointerdown",initAudio,{passive:true});
+/* keyboard: Space/Enter = default button / advance; 1-3 = choices */
+let holdKeyHandler=null;
+document.addEventListener("keydown",e=>{
+  initAudio();
+  if (holdKeyHandler && (e.code==="Space"||e.code==="Enter")){ e.preventDefault(); holdKeyHandler(true); return; }
+  if (e.repeat) return;
+  if (e.code==="Space"||e.code==="Enter"){
+    e.preventDefault();
+    if ($("#card").classList.contains("on") && advanceFn){ advanceFn(); return; }
+    const d=$("#actions [data-default]") || ( $("#actions").querySelectorAll("button").length===1 ? $("#actions button") : null);
+    if (d && !d.disabled) d.click();
+  } else if (/^Digit[1-4]$/.test(e.code)){ const b=$('#actions [data-key="'+e.code.slice(5)+'"]'); if (b) b.click(); }
+  else if (e.code==="KeyH" && !$("#hintBtn").hidden) showHint();
+  else if (e.code==="KeyM") setMuted(!AU.muted);
+});
+document.addEventListener("keyup",e=>{ if (holdKeyHandler && (e.code==="Space"||e.code==="Enter")){ e.preventDefault(); holdKeyHandler(false);} });
+
+/* animation loop helper: calls fn(dt,time) until it returns true */
+function loop(fn){ const g=RUN; return new Promise(res=>{ let last=performance.now(); const f=now=>{ if(g!==RUN) return; const dt=Math.min(.05,(now-last)/1000); last=now; if (fn(dt,now)) res(); else requestAnimationFrame(f); }; requestAnimationFrame(f); }); }
+function el(id){ return document.getElementById(id); }
+</script>
+<script>
+/* ============================ ART (inline SVG) ============================ */
+function rng(seed){ let s=seed; return ()=>{ s=(s*16807)%2147483647; return (s-1)/2147483646; }; }
+function sky(top,bot,id="sk"){ return `<defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${top}"/><stop offset="1" stop-color="${bot}"/></linearGradient></defs><rect x="-300" y="-400" width="1000" height="1200" fill="url(#${id})"/>`; }
+function stars(n=50,seed=7,maxY=260){ const r=rng(seed); let s=""; for(let i=0;i<n;i++){ const x=-60+r()*520,y=r()*maxY,z=r()*1.6+.4; s+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${z.toFixed(2)}" fill="#fff8dc" class="${i%3?'tw':'tw2'}"/>`; } return s; }
+function moon(x,y,r=26){ return `<circle cx="${x}" cy="${y}" r="${r*2}" fill="url(#gMoon)" opacity=".35"/><circle cx="${x}" cy="${y}" r="${r}" fill="#fbf3d0"/><circle cx="${x-7}" cy="${y-5}" r="${r*.22}" fill="#e8dcae"/><circle cx="${x+8}" cy="${y+8}" r="${r*.15}" fill="#e8dcae"/>`; }
+function cloud(x,y,s=1,c="#c9d3ff",o=.85){ return `<g transform="translate(${x},${y}) scale(${s})" opacity="${o}" fill="${c}"><ellipse cx="0" cy="0" rx="46" ry="16"/><ellipse cx="-26" cy="-8" rx="22" ry="16"/><ellipse cx="12" cy="-14" rx="26" ry="20"/><ellipse cx="38" cy="-4" rx="18" ry="12"/></g>`; }
+function column(x,y,h,w=14){ return `<g><rect x="${x-w/2-3}" y="${y-6}" width="${w+6}" height="7" fill="#d8cfbb"/><rect x="${x-w/2}" y="${y}" width="${w}" height="${h}" fill="url(#gMarble)"/><line x1="${x-2}" y1="${y}" x2="${x-2}" y2="${y+h}" stroke="#bdb39f" stroke-width="1"/><line x1="${x+3}" y1="${y}" x2="${x+3}" y2="${y+h}" stroke="#bdb39f" stroke-width="1"/><rect x="${x-w/2-3}" y="${y+h}" width="${w+6}" height="6" fill="#d8cfbb"/></g>`; }
+function temple(x,y,s=1,broken=false){ let c=""; [-75,-45,-15,15,45,75].forEach((cx,i)=>{ if(!(broken&&i===4)) c+=column(cx,-110,96); else c+=column(cx,-40,26); });
+  return `<g transform="translate(${x},${y}) scale(${s})">${broken?"":`<polygon points="-98,-122 0,-160 98,-122" fill="url(#gMarble)" stroke="#a89c84"/><polygon points="-80,-125 0,-152 80,-125" fill="none" stroke="#c9a640" stroke-width="2"/>`}
+  <rect x="-100" y="-124" width="200" height="12" fill="#e9e1cf"/><rect x="-100" y="-116" width="200" height="4" fill="#c9a640"/>${c}
+  <rect x="-108" y="-8" width="216" height="8" fill="#d8cfbb"/><rect x="-116" y="0" width="232" height="8" fill="#c4baa4"/></g>`; }
+function meander(y,w=400,c="#c9a640"){ let p=""; for(let x=0;x<w;x+=16) p+=`M${x},${y+8}v-8h12v6h-6v-2`; return `<path d="${p}" fill="none" stroke="${c}" stroke-width="2"/>`; }
+function boltPath(x,y,s=1,cls=""){ return `<g transform="translate(${x},${y}) scale(${s})" class="${cls}"><polygon points="8,-40 -10,4 2,4 -8,40 14,-6 2,-6 12,-40" fill="#fff3a8" stroke="#f2c84b" stroke-width="2" filter="url(#fGlow)"/></g>`; }
+function zeusFace(x,y,s=1){ // a great bearded face in the clouds
+  return `<g transform="translate(${x},${y}) scale(${s})"><g class="bob">
+    <ellipse cx="0" cy="0" rx="78" ry="60" fill="#e9ecff" opacity=".18"/>
+    <g fill="#eef0ff" opacity=".9">${[-48,-30,-12,6,24,42].map((cx,i)=>`<circle cx="${cx}" cy="${28+(i%2)*10}" r="16"/>`).join("")}<circle cx="-36" cy="50" r="14"/><circle cx="-12" cy="58" r="15"/><circle cx="14" cy="58" r="15"/><circle cx="36" cy="50" r="14"/><circle cx="0" cy="72" r="13"/></g>
+    <ellipse cx="0" cy="-6" rx="38" ry="40" fill="#f6e2c4"/>
+    <path d="M-42,-18 Q-46,-52 -10,-56 Q30,-60 42,-20 Q30,-40 0,-42 Q-30,-40 -42,-18Z" fill="#eef0ff"/>
+    <path d="M-26,-14 q10,-8 18,0 M8,-14 q10,-8 18,0" stroke="#7a6a58" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <circle cx="-17" cy="-4" r="5" fill="#fff6c0" filter="url(#fGlow)" class="glowp"/><circle cx="17" cy="-4" r="5" fill="#fff6c0" filter="url(#fGlow)" class="glowp"/>
+    <path d="M-4,4 q4,10 8,0" stroke="#c9a582" stroke-width="3" fill="none"/>
+    <path d="M-22,22 Q0,12 22,22 Q0,30 -22,22Z" fill="#eef0ff"/>
+    <path d="M-30,-44 l8,-12 8,10 8,-14 6,14 8,-12 8,12 8,-10 6,12" fill="none" stroke="url(#gGold)" stroke-width="5"/>
+  </g></g>`; }
+function figurine(x,y,s=1,fallen=false,act=""){ return `<g transform="translate(${x},${y}) scale(${s}) ${fallen?"rotate(80)":""}" ${act?`data-act="${act}" class="tap"`:""}>
+  ${act?`<circle cx="0" cy="-22" r="40" fill="#000" opacity="0"/><circle cx="0" cy="-22" r="36" class="tap-ring"/>`:""}
+  <ellipse cx="0" cy="2" rx="14" ry="5" fill="#6b4a2a"/><path d="M-6,0 L-5,-20 L-9,-34 Q0,-42 9,-34 L5,-20 L6,0Z" fill="#a8744a"/><circle cx="0" cy="-42" r="7" fill="#a8744a"/><path d="M9,-34 l10,-10" stroke="#a8744a" stroke-width="3"/></g>`; }
+function perseus(x,y,s=1,o={}){ const sh=o.shield!==false, sw=o.sword!==false;
+  return `<g transform="translate(${x},${y}) scale(${o.flip?-s:s},${s})" ${o.op!==undefined?`opacity="${o.op}"`:""}><g class="${o.cls||""}">
+    <path d="M-8,-30 Q-26,-6 -18,8 L-4,-4Z" fill="#284a9a"/>
+    <line x1="-5" y1="-4" x2="-8" y2="22" stroke="#c98d5c" stroke-width="6" stroke-linecap="round"/><line x1="5" y1="-4" x2="8" y2="22" stroke="#c98d5c" stroke-width="6" stroke-linecap="round"/>
+    <path d="M-11,22 h7 M5,22 h7" stroke="#6b3c12" stroke-width="4"/>
+    <path d="M-12,-34 L12,-34 L14,0 L-14,0Z" fill="#9c2f1f"/><path d="M-14,-4 h28" stroke="url(#gGold)" stroke-width="3"/>
+    <line x1="10" y1="-30" x2="20" y2="-12" stroke="#c98d5c" stroke-width="6" stroke-linecap="round"/>
+    ${sw?`<g transform="translate(20,-12) rotate(${o.swordUp?-150:-40})"><rect x="-2" y="-40" width="4" height="40" fill="#e8eef8" stroke="#8a96aa"/><rect x="-7" y="-2" width="14" height="4" fill="url(#gGold)"/><rect x="-2" y="2" width="4" height="8" fill="#6b3c12"/></g>`:""}
+    <rect x="-4" y="-42" width="8" height="8" fill="#c98d5c"/><circle cx="0" cy="-50" r="11" fill="#d9a06e"/>
+    ${o.helmet?`<path d="M-12,-50 Q-12,-66 0,-66 Q12,-66 12,-50 L12,-44 L6,-44 L6,-52 L-6,-52 L-6,-44 L-12,-44Z" fill="url(#gBronze)"/><path d="M0,-66 q-14,-10 -24,4" stroke="#c0392b" stroke-width="5" fill="none"/>`
+      :`<path d="M-12,-50 Q-14,-64 0,-63 Q14,-64 12,-50 Q8,-58 0,-57 Q-8,-58 -12,-50Z" fill="#3a2414"/><circle cx="-10" cy="-56" r="4" fill="#3a2414"/><circle cx="10" cy="-56" r="4" fill="#3a2414"/><circle cx="0" cy="-62" r="4" fill="#3a2414"/>`}
+    <circle cx="4" cy="-50" r="1.6" fill="#222"/>
+    ${sh?`<g transform="translate(-14,-14)"><circle r="15" fill="url(#gShield)" stroke="#6b3c12" stroke-width="2"/><circle r="5" fill="#f2c84b"/></g>`:""}
+  </g></g>`; }
+function wing(x,y,s=1,cls="flap"){ return `<g transform="translate(${x},${y}) scale(${s})"><g class="${cls}"><path d="M0,0 Q-10,-40 -50,-70 Q-30,-40 -48,-46 Q-28,-24 -42,-22 Q-20,-8 -30,0Z" fill="#fbfbff" stroke="#c9cfe0" stroke-width="1.5"/><path d="M-8,-10 Q-24,-30 -40,-54 M-6,-4 Q-20,-14 -34,-20" stroke="#d0d6ea" fill="none"/></g></g>`; }
+function pegasus(x,y,s=1,o={}){ return `<g transform="translate(${x},${y}) scale(${o.flip?-s:s},${s})"><g class="${o.cls||""}">
+   ${wing(-6,-26,1,o.still?"":"flap")}
+   <path d="M-46,-14 q-22,4 -26,26 q10,-10 24,-12" fill="#e6e8f2"/>
+   ${o.fly?`<path d="M-30,6 l-22,10 M-22,8 l-16,16 M24,6 l20,12 M30,4 l22,4" stroke="#f4f4fa" stroke-width="7" stroke-linecap="round"/>`
+     :`<path d="M-30,6 l-4,30 M-20,8 l2,30 M22,6 l-2,30 M30,4 l6,30" stroke="#f4f4fa" stroke-width="7" stroke-linecap="round"/><path d="M-36,36 h6 M-20,38 h6 M17,36 h6 M33,34 h6" stroke="#8a8a96" stroke-width="5"/>`}
+   <ellipse cx="0" cy="-6" rx="40" ry="20" fill="#f7f7fd"/>
+   <path d="M26,-14 Q34,-40 44,-50 L56,-44 Q50,-30 40,-4Z" fill="#f7f7fd"/>
+   <path d="M42,-52 Q56,-60 68,-46 Q70,-40 62,-38 Q54,-40 48,-38Z" fill="#f7f7fd"/>
+   <circle cx="56" cy="-48" r="2" fill="#223"/><path d="M44,-54 l2,-10 4,8" fill="#e6e8f2"/>
+   <path d="M30,-20 Q34,-44 44,-54" stroke="#d7dbe9" stroke-width="5" fill="none"/>
+   ${wing(4,-24,1.1,o.still?"":"flap")}
+ </g></g>`; }
+function buboIcon(){ return `<svg viewBox="-30 -36 60 66"><g>${buboBody(false)}</g></svg>`; }
+function buboBody(sw=true){ return `<ellipse cx="0" cy="8" rx="18" ry="20" fill="url(#gGold)" stroke="#7a5410"/>
+  <path d="M-8,4 l8,6 8,-6 M-8,12 l8,6 8,-6 M-8,20 l8,6 8,-6" stroke="#9a6a14" fill="none"/>
+  <path d="M-18,0 q-10,14 -2,26 l6,-4Z M18,0 q10,14 2,26 l-6,-4Z" fill="#c8941e" stroke="#7a5410"/>
+  <g class="${sw?'swivel':''}"><ellipse cx="0" cy="-14" rx="17" ry="14" fill="url(#gGold)" stroke="#7a5410"/>
+  <path d="M-16,-22 l-4,-12 10,6Z M16,-22 l4,-12 -10,6Z" fill="#c8941e"/>
+  <circle cx="-7" cy="-14" r="7" fill="#fff6d8" stroke="#7a5410" stroke-width="2"/><circle cx="7" cy="-14" r="7" fill="#fff6d8" stroke="#7a5410" stroke-width="2"/>
+  <circle cx="-7" cy="-14" r="3.6" fill="#1a2a6a"/><circle cx="7" cy="-14" r="3.6" fill="#1a2a6a"/><circle cx="-6" cy="-15" r="1.2" fill="#fff"/><circle cx="8" cy="-15" r="1.2" fill="#fff"/>
+  <path d="M-3,-8 L0,-2 L3,-8Z" fill="#7a5410"/></g>
+  <path d="M-6,28 v5 M0,28 v6 M6,28 v5" stroke="#7a5410" stroke-width="3"/>`; }
+function bubo(x,y,s=1,o={}){ return `<g transform="translate(${x},${y}) scale(${s})" ${o.act?`data-act="${o.act}" class="tap"`:""}>${o.act?`<circle r="44" fill="#000" opacity="0"/><circle r="40" class="tap-ring"/>`:""}<g class="${o.cls||"bob"}">${o.fly?wing(-14,0,.5)+`<g transform="scale(-1,1)">${wing(-14,0,.5)}</g>`:""}${buboBody()}</g></g>`; }
+function calibos(x,y,s=1,o={}){ return `<g transform="translate(${x},${y}) scale(${o.flip?-s:s},${s})"><g class="${o.cls||""}">
+  <path d="M-14,10 q-30,10 -34,-14 q-2,-8 4,-10" stroke="#3d4a28" stroke-width="4" fill="none"/>
+  <path d="M-8,4 l-6,30 M8,4 q10,14 2,30" stroke="#55663a" stroke-width="9" stroke-linecap="round"/>
+  <path d="M-18,36 h10 M2,36 l6,-4 4,4" stroke="#2a2018" stroke-width="5"/>
+  <path d="M-18,-34 Q-24,0 -14,8 L16,8 Q22,-14 14,-36Z" fill="#55663a"/>
+  <path d="M-14,-4 L16,-4 L18,10 L-16,10Z" fill="#4a2e1a"/>
+  <path d="M14,-30 q22,4 26,22" stroke="#55663a" stroke-width="8" fill="none" stroke-linecap="round"/>
+  ${o.noHand?"":`<path d="M40,-8 l6,4 M40,-8 l2,7 M40,-8 l7,0" stroke="#3d4a28" stroke-width="3"/>`}
+  <path d="M-14,-30 q-20,8 -20,26" stroke="#55663a" stroke-width="8" fill="none" stroke-linecap="round"/>
+  <circle cx="2" cy="-44" r="14" fill="#61733f"/>
+  <path d="M-8,-54 q-14,-14 -6,-24 q2,12 10,16Z M10,-54 q14,-14 6,-24 q-2,12 -10,16Z" fill="#d9cfae"/>
+  <path d="M-14,-46 l-8,-4 6,8Z M16,-46 l8,-4 -6,8Z" fill="#61733f"/>
+  <circle cx="-3" cy="-46" r="2.6" fill="#ff3a1a" filter="url(#fGlow)"/><circle cx="7" cy="-46" r="2.6" fill="#ff3a1a" filter="url(#fGlow)"/>
+  <path d="M-4,-36 q6,4 12,0" stroke="#2a2018" stroke-width="2" fill="none"/><path d="M-2,-36 l1,3 M5,-36 l-1,3" stroke="#fff" stroke-width="1.5"/>
+  <path d="M-6,-58 q8,-6 16,0" stroke="#2a2018" stroke-width="3" fill="none"/>
+ </g></g>`; }
+function vulture(x,y,s=1,cage=true){ return `<g transform="translate(${x},${y}) scale(${s})"><g class="bob">
+  ${wing(-6,-4,.9)}<g transform="scale(-1,1)">${wing(-6,-4,.9)}</g>
+  <path d="M-10,-6 l-16,-34 l10,6 l-2,-12" fill="none"/>
+  ${["#2a2026"].map(c=>`<g transform="translate(0,0)"><g transform="scale(1)"><path d="M-46,-50 Q-20,-30 0,-30 Q20,-30 46,-50 Q30,-10 0,-6 Q-30,-10 -46,-50Z" fill="${c}"/></g></g>`).join("")}
+  <ellipse cx="0" cy="-14" rx="14" ry="18" fill="#3a2a30"/><circle cx="0" cy="-36" r="8" fill="#c88a8a"/><path d="M0,-34 l10,4 -8,2Z" fill="#e2c26a"/><circle cx="2" cy="-38" r="1.5" fill="#000"/>
+  <path d="M-8,-30 q8,6 16,0" stroke="#f1ece0" stroke-width="5" fill="none"/>
+  ${cage?`<g transform="translate(0,22)"><line x1="0" y1="-24" x2="0" y2="-10" stroke="#e2b03a" stroke-width="2"/><path d="M-16,-10 Q0,-22 16,-10 V20 H-16Z" fill="url(#gSpirit)" opacity=".7"/>
+   <ellipse cx="0" cy="4" rx="7" ry="12" fill="#e8fbff" class="glowp"/>
+   <path d="M-16,-10 Q0,-22 16,-10 V20 H-16Z M-8,-14 V20 M0,-16 V20 M8,-14 V20" fill="none" stroke="url(#gGold)" stroke-width="2"/></g>`:""}
+ </g></g>`; }
+function andromeda(x,y,s=1,o={}){ return `<g transform="translate(${x},${y}) scale(${s})" ${o.op!==undefined?`opacity="${o.op}"`:""}><g class="${o.cls||""}">
+  <path d="M-14,-30 L14,-30 L22,26 L-22,26Z" fill="${o.spirit?'#d8f6ff':'#f5f1ff'}"/><path d="M-14,-30 L14,-30 L10,-20 L-10,-20Z" fill="#e2b03a"/>
+  <circle cx="0" cy="-42" r="10" fill="#f0c8a8"/><path d="M-11,-40 Q-14,-58 0,-56 Q14,-58 11,-40 Q14,-20 8,-20 Q10,-44 0,-48 Q-10,-44 -8,-20 Q-14,-20 -11,-40Z" fill="#e8c060"/>
+  ${o.chained?`<path d="M-14,-24 L-34,-40 M14,-24 L34,-40" stroke="#8a8f99" stroke-width="3" stroke-dasharray="4 2"/><path d="M-14,-24 q-6,6 -12,2 M14,-24 q6,6 12,2" stroke="#f0c8a8" stroke-width="5" fill="none"/>`
+    :`<path d="M-12,-26 q-10,16 -4,26 M12,-26 q10,16 4,26" stroke="#f0c8a8" stroke-width="5" fill="none"/>`}
+ </g></g>`; }
+function witch(x,y,s=1,flip=false,eye=false){ return `<g transform="translate(${x},${y}) scale(${flip?-s:s},${s})"><g class="sway">
+  <path d="M-26,40 Q-30,-10 -8,-40 Q12,-50 22,-26 Q30,0 28,40Z" fill="#6c6870"/>
+  <path d="M-6,-38 Q8,-56 22,-34 Q26,-24 18,-20 L-2,-24Z" fill="#8c8590"/>
+  <path d="M16,-30 q14,6 12,12 q-6,-2 -12,-4" fill="#c7b8a2"/><path d="M14,-34 h6" stroke="#2a2a2a" stroke-width="2"/>
+  <path d="M24,-6 q16,0 20,-12" stroke="#c7b8a2" stroke-width="5" fill="none" stroke-linecap="round"/>
+  ${eye?`<circle cx="46" cy="-20" r="6" fill="#fff" stroke="#e2b03a" stroke-width="2"/><circle cx="47" cy="-20" r="3" fill="#2f7f3f"/>`:""}
+ </g></g>`; }
+function charon(x,y,s=1){ return `<g transform="translate(${x},${y}) scale(${s})">
+  <path d="M-80,10 Q-70,32 0,32 Q70,32 90,4 L60,12 L-70,12Z" fill="#3a2a1c" stroke="#1d140c"/><path d="M90,4 q10,-14 4,-24" stroke="#3a2a1c" stroke-width="6" fill="none"/>
+  <line x1="-50" y1="-90" x2="-30" y2="40" stroke="#5a4028" stroke-width="5"/>
+  <g class="sway"><path d="M-46,12 Q-50,-40 -30,-70 Q-10,-80 4,-60 Q10,-20 10,12Z" fill="#14121c"/>
+  <path d="M-36,-64 Q-24,-80 -8,-64 Q-6,-50 -20,-48 Q-34,-48 -36,-64Z" fill="#000"/><circle cx="-26" cy="-60" r="2" fill="#7fe0ff" filter="url(#fGlow)"/><circle cx="-16" cy="-60" r="2" fill="#7fe0ff" filter="url(#fGlow)"/>
+  <path d="M-10,-30 q16,-6 22,4" stroke="#d8d0be" stroke-width="3" fill="none"/></g></g>`; }
+function dog(x,y,s=1){ const head=(id,dx,rot)=>`<g id="${id}" transform="translate(${dx},-44) rotate(${rot})"><g class="dh"><path d="M-14,-6 Q0,-24 18,-10 L38,-4 L36,6 L16,10 Q-6,12 -14,-6Z" fill="#5a3a24"/>
+    <path d="M-6,-16 l-4,-14 10,8Z" fill="#3a2414"/><circle cx="12" cy="-8" r="3.4" class="eye" fill="#ffcc33"/>
+    <path class="jaw" d="M16,6 L38,4 L34,14 L14,12Z" fill="#3a2414"/><path d="M20,6 l2,4 4,-4 2,4 4,-4" stroke="#fff" stroke-width="1.5" fill="none"/></g></g>`;
+  return `<g transform="translate(${x},${y}) scale(${s})">
+   <path d="M-50,-10 q-24,-6 -30,-30" stroke="#4a2e1c" stroke-width="7" fill="none"/>
+   <path d="M-40,0 l-6,34 M-24,4 l0,32 M24,4 l4,32 M40,0 l8,32" stroke="#4a2e1c" stroke-width="10" stroke-linecap="round"/>
+   <ellipse cx="0" cy="-10" rx="56" ry="26" fill="#5a3a24"/><path d="M-30,-30 q30,-14 60,0" stroke="#3a2414" stroke-width="5" fill="none"/>
+   <g transform="scale(-1,1)">${head("dogL",30,-14)}</g>${head("dogR",30,-14)}
+  </g>`; }
+function medusa(x,y,s=1,o={}){ const sn=[];
+  for(let i=0;i<9;i++){ const a=-80+i*20; sn.push(`<g transform="rotate(${a})"><path class="snake" d="M0,-12 q-8,-10 0,-20 q8,-10 0,-20" stroke="#4f8a3a" stroke-width="5" fill="none" stroke-linecap="round"/></g>`); }
+  return `<g transform="translate(${x},${y}) scale(${o.flip?-s:s},${s})"><g class="${o.cls||""}">
+   <path d="M-10,0 Q-40,30 -10,46 Q40,62 70,40 Q96,20 110,34" stroke="#3f6b2e" stroke-width="22" fill="none" stroke-linecap="round"/>
+   <path d="M-10,0 Q-40,30 -10,46 Q40,62 70,40 Q96,20 110,34" stroke="#7aa65a" stroke-width="6" fill="none" stroke-dasharray="3 7"/>
+   <g transform="translate(112,34)"><g class="rattle"><ellipse cx="6" cy="0" rx="6" ry="5" fill="#c9b47a"/><ellipse cx="15" cy="0" rx="5" ry="4.5" fill="#b8a36a"/><ellipse cx="23" cy="0" rx="4" ry="4" fill="#a8935a"/></g></g>
+   <path d="M-14,-40 Q-18,-10 -10,4 L12,4 Q18,-16 12,-40Z" fill="#5e8f48"/>
+   <path d="M12,-34 q20,0 26,-12" stroke="#5e8f48" stroke-width="7" fill="none" stroke-linecap="round"/>
+   <g transform="translate(38,-46)"><path d="M0,-28 Q14,0 0,28" stroke="#6b3c12" stroke-width="3" fill="none"/><line x1="0" y1="-28" x2="0" y2="28" stroke="#ddd" stroke-width="1"/></g>
+   <path d="M-12,-34 q-16,6 -20,20" stroke="#5e8f48" stroke-width="7" fill="none" stroke-linecap="round"/>
+   <g transform="translate(0,-54)">${sn.join("")}<circle r="14" fill="#6f9e55"/>
+    <ellipse cx="-5" cy="-1" rx="3.4" ry="2.4" fill="#d6ff6a" filter="url(#fGlow)" class="glowp"/><ellipse cx="5" cy="-1" rx="3.4" ry="2.4" fill="#d6ff6a" filter="url(#fGlow)" class="glowp"/>
+    <path d="M-5,7 q5,3 10,0" stroke="#203a18" stroke-width="2" fill="none"/></g>
+  </g></g>`; }
+function medusaHead(x,y,s=1){ let sn=""; for(let i=0;i<11;i++) sn+=`<g transform="rotate(${-100+i*20})"><path class="snake" d="M0,-12 q-8,-10 0,-20 q8,-10 0,-20" stroke="#4f8a3a" stroke-width="5" fill="none" stroke-linecap="round"/></g>`;
+  return `<g transform="translate(${x},${y}) scale(${s})">${sn}<circle r="15" fill="#6f9e55"/><ellipse cx="-5" cy="-1" rx="4" ry="3" fill="#d6ff6a" filter="url(#fGlow)"/><ellipse cx="5" cy="-1" rx="4" ry="3" fill="#d6ff6a" filter="url(#fGlow)"/><circle r="56" fill="url(#gGlow)" opacity=".35"/></g>`; }
+function scorpion(x,y,s=1,id=""){ return `<g id="${id}" transform="translate(${x},${y}) scale(${s})" data-act="${id}" class="tap">
+  <circle r="46" fill="#000" opacity="0"/>
+  <g class="sway"><path d="M-30,6 l-14,12 M-22,10 l-10,16 M22,10 l10,16 M30,6 l14,12" stroke="#5a2412" stroke-width="5" stroke-linecap="round"/>
+  <ellipse cx="0" cy="0" rx="32" ry="14" fill="#8a3a1a" stroke="#4a1a0a" stroke-width="2"/>
+  <path d="M-8,-10 q-14,-34 10,-44 q16,-4 16,10" stroke="#8a3a1a" stroke-width="8" fill="none" stroke-linecap="round"/><path d="M18,-34 l8,6 -10,2Z" fill="#e2c26a"/>
+  <path d="M28,0 q20,-6 22,-20 M-28,0 q-20,-6 -22,-20" stroke="#8a3a1a" stroke-width="6" fill="none"/>
+  <path d="M46,-24 l10,-2 -4,8 M-46,-24 l-10,-2 4,8" stroke="#4a1a0a" stroke-width="5"/>
+  <circle cx="-6" cy="-6" r="2.5" fill="#ffd040"/><circle cx="6" cy="-6" r="2.5" fill="#ffd040"/></g></g>`; }
+function kraken(o={}){ return `<g id="kraken" transform="translate(200,${o.y??420})">
+  <g class="${o.still?"":"sway"}">
+  <path d="M-60,40 Q-110,0 -130,-70 Q-120,-80 -110,-70 Q-100,-20 -60,0Z" fill="#3e5a52"/>
+  <path d="M60,40 Q110,0 130,-70 Q120,-80 110,-70 Q100,-20 60,0Z" fill="#3e5a52"/>
+  <path d="M-70,60 Q-150,40 -160,-10 Q-148,-16 -140,-8 Q-120,30 -70,30Z" fill="#33504a"/>
+  <path d="M70,60 Q150,40 160,-10 Q148,-16 140,-8 Q120,30 70,30Z" fill="#33504a"/>
+  <path d="M-130,-70 l-12,-12 M-130,-70 l-4,-16 M-130,-70 l6,-14 M130,-70 l12,-12 M130,-70 l4,-16 M130,-70 l-6,-14" stroke="#2a3e3a" stroke-width="6" stroke-linecap="round"/>
+  <path d="M-70,120 Q-80,-20 -40,-60 L40,-60 Q80,-20 70,120Z" fill="#4c6f64"/>
+  <path d="M-40,-20 h80 M-46,10 h92 M-50,40 h100 M-54,70 h108" stroke="#3a564e" stroke-width="5"/>
+  <path d="M-30,-30 Q0,-20 30,-30 L26,80 L-26,80Z" fill="#8aa88a" opacity=".5"/>
+  <g transform="translate(0,-86)">
+   <path d="M-44,0 Q-50,-40 -30,-56 L-50,-80 L-20,-62 L-14,-90 L0,-64 L14,-90 L20,-62 L50,-80 L30,-56 Q50,-40 44,0 Q40,30 0,36 Q-40,30 -44,0Z" fill="#567a6e"/>
+   <path d="M-50,-10 l-24,-14 6,22Z M50,-10 l24,-14 -6,22Z" fill="#3e5a52"/>
+   <g id="kEyes"><ellipse cx="-17" cy="-14" rx="9" ry="7" fill="#f2c84b" class="kEye"/><ellipse cx="17" cy="-14" rx="9" ry="7" fill="#f2c84b" class="kEye"/><circle cx="-15" cy="-14" r="3.5" fill="#200"/><circle cx="15" cy="-14" r="3.5" fill="#200"/></g>
+   <path d="M-24,12 Q0,28 24,12 L18,22 Q0,32 -18,22Z" fill="#1d2a26"/><path d="M-18,14 l4,6 4,-6 4,6 4,-6 4,6 4,-6 4,6" stroke="#eee" stroke-width="2" fill="none"/>
+  </g></g></g>`; }
+function sea(y=300,c1="#1b4f6b",c2="#081c33"){ return `<defs><linearGradient id="seaG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></linearGradient></defs>
+  <rect x="-200" y="${y}" width="800" height="${800-y}" fill="url(#seaG)"/>
+  <g class="wave"><path d="M-200,${y+6} ${Array.from({length:34},(_,i)=>`q13,-9 26,0`).join(" ")}" stroke="#8fd0e8" stroke-width="3" fill="none" opacity=".6"/></g>
+  <g class="wave" style="animation-delay:-1s"><path d="M-180,${y+30} ${Array.from({length:34},(_,i)=>`q13,-8 26,0`).join(" ")}" stroke="#5aa8c8" stroke-width="3" fill="none" opacity=".45"/></g>`; }
+function fire(x,y,s=1){ return `<g transform="translate(${x},${y}) scale(${s})"><circle r="44" fill="url(#gFire)" opacity=".5"/><rect x="-8" y="0" width="16" height="30" fill="#5a4028"/><path d="M-12,2 Q-14,-20 0,-34 Q14,-20 12,2Z" fill="#ff8a1c" class="flicker" style="transform-box:fill-box;transform-origin:50% 100%"/><path d="M-6,2 Q-6,-12 0,-20 Q6,-12 6,2Z" fill="#fff2a0" class="flicker"/></g>`; }
+function shieldMirror(cx,cy,r,inner){ return `<g transform="translate(${cx},${cy})"><circle r="${r+10}" id="rim" fill="url(#gBronze)" stroke="#5e3412" stroke-width="3"/><clipPath id="mclip"><circle r="${r}"/></clipPath><circle r="${r}" fill="#1a1608"/><g clip-path="url(#mclip)">${inner}</g><circle r="${r}" fill="none" stroke="#fff6d8" stroke-width="2" opacity=".6"/><path d="M${-r*.6},${-r*.5} q${r*.3},${-r*.3} ${r*.7},${-r*.3}" stroke="#fff" stroke-width="3" opacity=".35" fill="none"/></g>`; }
+function constellation(pts, lines, label, lx, ly, cls=""){ return `<g class="${cls}">${lines.map(([a,b])=>`<line x1="${pts[a][0]}" y1="${pts[a][1]}" x2="${pts[b][0]}" y2="${pts[b][1]}" stroke="#f2c84b" stroke-width="1.4" opacity=".7"/>`).join("")}${pts.map(p=>`<circle cx="${p[0]}" cy="${p[1]}" r="3" fill="#fff8dc" filter="url(#fGlow)" class="tw"/>`).join("")}<text x="${lx}" y="${ly}" fill="#f2c84b" font-size="13" text-anchor="middle" font-family="Palatino Linotype,Georgia,serif" letter-spacing="2">${label}</text></g>`; }
+function ground(y,c="#2a2414"){ return `<rect x="-200" y="${y}" width="800" height="${800-y}" fill="${c}"/>`; }
+function gift(x,y,kind,act,taken){ const inner = kind==="shield" ? `<circle r="24" fill="url(#gShield)" stroke="#6b3c12" stroke-width="3"/><circle r="7" fill="#f2c84b"/>`
+  : kind==="helmet" ? `<path d="M-22,10 Q-24,-26 0,-26 Q24,-26 22,10 L22,18 L10,18 L10,0 L-10,0 L-10,18 L-22,18Z" fill="url(#gBronze)" stroke="#5e3412" stroke-width="2"/><path d="M0,-26 q-20,-14 -34,6" stroke="#c0392b" stroke-width="7" fill="none"/>`
+  : `<g transform="rotate(35)"><rect x="-3" y="-34" width="6" height="44" fill="#eef3fb" stroke="#8a96aa"/><rect x="-11" y="8" width="22" height="5" fill="url(#gGold)"/><rect x="-3" y="13" width="6" height="12" fill="#6b3c12"/><circle cy="27" r="4" fill="url(#gGold)"/></g>`;
+  return `<g transform="translate(${x},${y})" data-act="${act}" class="tap ${taken?"gone":""}" id="${act}"><circle r="46" fill="#000" opacity="0"/><circle r="38" fill="url(#gGlow)" class="glowp"/><circle r="40" class="tap-ring"/><g class="bob">${inner}</g></g>`; }
+</script>
+<script>
+/* ============================ BACKDROPS ============================ */
+function ammon(x,y,s=1){ return `<g transform="translate(${x},${y}) scale(${s})"><g class="sway"><path d="M-16,-30 L16,-30 L20,26 L-20,26Z" fill="#7a5a3a"/><circle cx="0" cy="-40" r="10" fill="#e0b08a"/><path d="M-9,-36 Q0,-14 9,-36" fill="#e8e8e8"/><path d="M-10,-44 q10,-10 20,0" stroke="#ddd" stroke-width="4" fill="none"/><line x1="20" y1="-26" x2="26" y2="26" stroke="#5a4028" stroke-width="4"/></g></g>`; }
+function bgTitle(){ return sky("#24398f","#060b26")+stars(70,11,300)+moon(330,70,20)
+  +`<path d="M-200,400 L-200,300 L40,230 L120,170 L200,150 L280,170 L360,230 L600,300 L600,400Z" fill="#1a2350"/><path d="M120,170 L200,150 L280,170 L250,180 L200,168 L150,182Z" fill="#e9ecff" opacity=".8"/>`
+  +cloud(80,190,1.3,"#dfe6ff",.55)+cloud(320,200,1.5,"#dfe6ff",.5)+temple(200,150,.62)
+  +boltPath(70,90,1.1,"glowp")+boltPath(330,140,.8,"glowp")
+  +`<path d="M-200,800 L-200,340 L100,300 L200,320 L300,296 L600,340 L600,800Z" fill="#0b1238"/>`; }
+function bgOlympus(extra=""){ return sky("#1b2f8f","#0a1238")+stars(40,3,200)+cloud(60,250,1.4,"#dfe6ff",.45)+cloud(340,236,1.6,"#dfe6ff",.45)
+  +zeusFace(200,100,.95)+column(34,150,170,22)+column(366,150,170,22)
+  +`<ellipse cx="200" cy="332" rx="160" ry="46" fill="#d9cfb8" stroke="url(#gGold)" stroke-width="5"/><ellipse cx="200" cy="328" rx="136" ry="34" fill="#bfb293"/><ellipse cx="200" cy="328" rx="90" ry="20" fill="none" stroke="#a89c7c" stroke-width="2"/>`
+  +figurine(100,330,.7)+figurine(300,326,.7)+figurine(250,346,.6)+extra; }
+function bgJoppa(extra=""){ return sky("#ff9a5a","#4a2a6a")+`<circle cx="320" cy="140" r="34" fill="#ffd27a" opacity=".85"/>`
+  +`<path d="M-300,800 V250 H700 V800Z" fill="#7a6a5a"/>`+[0,1,2,3].map(i=>`<path d="M${-10+i*20},${330-i*22} Q200,${250-i*26} ${410-i*20},${330-i*22}" stroke="#cfc3a8" stroke-width="12" fill="none"/>`).join("")
+  +column(60,200,90,16)+column(330,230,60,16)+`<rect x="300" y="282" width="40" height="10" fill="#bdb39f" transform="rotate(12 320 287)"/>`
+  +`<path d="M80,300 q6,-20 2,-34 M90,300 q-2,-16 6,-28 M310,300 q4,-16 0,-26" stroke="#4a6a2a" stroke-width="3" fill="none"/>`+ground(340,"#5a4a3a")+extra; }
+function bgWell(extra=""){ return sky("#0f1a5a","#050a24")+stars(60,5,230)+moon(80,70,24)
+  +`<path d="M-200,800 V250 Q60,230 200,250 Q330,262 600,240 V800Z" fill="#1d2a3a"/>`
+  +`<ellipse cx="200" cy="318" rx="120" ry="28" fill="#2a4a7a"/><ellipse cx="200" cy="318" rx="100" ry="20" fill="#3d6aa8" class="glowp"/><ellipse cx="80" cy="316" rx="6" ry="2" fill="#fff" opacity=".6"/>`
+  +`<path d="M60,300 q-20,-10 -6,-26 q10,-6 26,8Z M330,300 q20,-14 6,-28 q-16,-4 -24,12Z" fill="#3a3a4a"/>`+extra; }
+function bgSwamp(extra=""){ return sky("#0c2418","#020806")+stars(20,9,120)+moon(320,60,16)
+  +`<path d="M-200,800 V270 Q100,250 200,270 Q300,288 600,262 V800Z" fill="#0f2a1a"/>`
+  +[[40,300],[360,290],[140,250]].map(([x,y],i)=>`<g transform="translate(${x},${y}) scale(${1-i*.25})"><path d="M0,0 Q-10,-60 8,-120 Q-30,-150 -50,-130 M6,-90 Q40,-110 50,-90 M-2,-60 Q-30,-70 -40,-56" stroke="#1d1410" stroke-width="10" fill="none" stroke-linecap="round"/></g>`).join("")
+  +`<ellipse cx="200" cy="350" rx="170" ry="24" fill="#1a3a2a"/><ellipse cx="180" cy="352" rx="120" ry="12" fill="#2a5a3a" opacity=".6"/>`
+  +[[90,330],[300,320],[240,280]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="7" fill="#8aff9a" filter="url(#fGlow)" class="glowp"/>`).join("")+extra; }
+function bgCourt(extra=""){ return sky("#8fc6ff","#f6e2b0")+`<rect x="-200" y="240" width="1000" height="600" fill="#d8cfbb"/>`+meander(244,400,"#b8860b")
+  +column(40,90,150,22)+column(100,90,150,22)+column(300,90,150,22)+column(360,90,150,22)+`<rect x="10" y="74" width="380" height="16" fill="#e9e1cf"/><rect x="10" y="66" width="380" height="8" fill="#c9a640"/>`
+  +`<rect x="150" y="206" width="100" height="10" fill="#c4baa4"/><rect x="140" y="216" width="120" height="10" fill="#b8ad95"/>`
+  +[[20,300],[50,310],[350,306],[380,296],[80,320],[320,322]].map(([x,y])=>`<g transform="translate(${x},${y})"><circle cy="-34" r="9" fill="#7a5a4a"/><path d="M-12,-24 h24 l4,40 h-32Z" fill="#6a5a8a"/></g>`).join("")+extra; }
+function bgTemple(extra=""){ return sky("#1a2a5a","#0a1028")+`<rect x="-200" y="250" width="1000" height="600" fill="#3a3550"/>`
+  +column(40,60,190,24)+column(360,60,190,24)
+  +`<g id="thetisStatue"><path d="M150,250 L150,170 Q200,150 250,170 L250,250Z" fill="url(#gMarble)"/><ellipse cx="200" cy="120" rx="42" ry="50" fill="url(#gMarble)"/>
+    <path d="M158,110 Q160,60 200,62 Q240,60 242,110 Q236,84 200,80 Q164,84 158,110Z" fill="#cfc6b4"/><path d="M180,118 q8,-4 14,0 M206,118 q8,-4 14,0" stroke="#9a907c" stroke-width="3" fill="none"/>
+    <ellipse id="tEyeL" cx="187" cy="122" rx="5" ry="3" fill="#9a907c"/><ellipse id="tEyeR" cx="213" cy="122" rx="5" ry="3" fill="#9a907c"/><path d="M190,146 q10,4 20,0" stroke="#9a907c" stroke-width="3" fill="none"/></g>`
+  +[[70,330],[110,340],[290,340],[330,330]].map(([x,y])=>`<g transform="translate(${x},${y})"><circle cy="-34" r="9" fill="#c8a080"/><path d="M-12,-24 h24 l4,40 h-32Z" fill="#8a7aa8"/></g>`).join("")+extra; }
+function bgCave(extra=""){ return sky("#2a2834","#0a0910")+`<path d="M-200,0 H600 V40 ${Array.from({length:12},(_,i)=>`L${-200+i*70+35},${70+(i%3)*20} L${-200+(i+1)*70},40`).join(" ")} Z" fill="#141218"/>`
+  +`<rect x="-200" y="300" width="1000" height="600" fill="#1e1c24"/>`+fire(200,300,1.1)
+  +`<ellipse cx="200" cy="330" rx="34" ry="12" fill="#2a2a2a"/>`+extra; }
+function bgStyx(extra=""){ return sky("#1a3a3a","#050f12")+`<rect x="-200" y="250" width="1000" height="600" fill="#061416"/>`
+  +[0,1,2].map(i=>`<g class="wave" style="animation-delay:${-i*.6}s"><ellipse cx="${100+i*120}" cy="${200+i*30}" rx="140" ry="16" fill="#cfe" opacity=".07"/></g>`).join("")
+  +`<path d="M300,250 L330,170 L360,250Z M340,250 L370,190 L400,250Z" fill="#0c1a1c"/><path d="M-30,250 L10,200 L40,250Z" fill="#0c1a1c"/>`+extra; }
+function bgIsle(extra=""){ return sky("#2a1a2a","#0a0608")+stars(15,4,120)+`<rect x="-200" y="280" width="1000" height="600" fill="#2a2018"/>`
+  +temple(200,280,.9,true)+fire(60,250,.8)+fire(340,250,.8)+extra; }
+function bgLair(extra=""){ return sky("#1c1208","#050302")+`<rect x="-200" y="300" width="1000" height="600" fill="#1a120a"/>`
+  +column(50,60,240,30)+column(140,80,220,24)+column(260,80,220,24)+column(350,60,240,30)+fire(100,270,.9)+fire(300,270,.9)+extra; }
+function bgCliffs(extra=""){ return sky("#ff8a5a","#3a1a4a")+`<circle cx="200" cy="230" r="50" fill="#ffd27a" opacity=".85"/>`+sea(260)
+  +`<path d="M-200,800 L-200,200 L-20,190 L30,230 L60,260 L80,800Z" fill="#3a2a2a"/><path d="M300,400 L320,300 L360,270 L380,300 L600,280 L600,800Z" fill="#3a2a2a"/>`
+  +`<path d="M-30,188 L10,186 L20,196 L-30,198Z" fill="#5a4a4a"/>`
+  +[[-10,186],[5,184]].map(([x,y])=>`<g transform="translate(${x},${y}) scale(.6)"><circle cy="-34" r="9" fill="#7a5a4a"/><path d="M-12,-24 h24 l4,40 h-32Z" fill="#6a5a8a"/></g>`).join("")+extra; }
+function bgNightSky(extra=""){ return sky("#0a1446","#02040f")+stars(110,21,400)+extra; }
+
+/* ============================ MINI-GAMES ============================ */
+function status(txt){ let s=$("#actions .status"); if(!s){ s=document.createElement("div"); s.className="status"; $("#actions").prepend(s);} s.textContent=txt; return s; }
+function meter(withZone){ const m=document.createElement("div"); m.className="meter"; m.innerHTML=withZone?`<div class="zone" style="left:41%;width:18%"></div><div class="needle"></div>`:`<i></i>`; $("#actions").appendChild(m); return m; }
+function quickLine(id){ const L=VOICE_LINES[id]; status(L.text); loadVoice(id,"quick").then(a=>{ if(a){ a.muted=AU.muted; a.play().catch(()=>{});} }); }
+
+async function holdGame(){
+  const g=RUN; clearActions(); status("Press and HOLD the button until the bar is full.");
+  const m=meter(false), bar=m.querySelector("i");
+  const b=btn("✋ Hold the bridle!",{cls:"primary full"});
+  let holding=false; const on=e=>{ e.preventDefault(); initAudio(); holding=true; b.classList.add("held"); try{b.setPointerCapture(e.pointerId);}catch(_){} };
+  const off=()=>{ holding=false; b.classList.remove("held"); };
+  b.addEventListener("pointerdown",on); b.addEventListener("pointerup",off); b.addEventListener("pointercancel",off); b.addEventListener("lostpointercapture",off);
+  b.addEventListener("contextmenu",e=>e.preventDefault());
+  holdKeyHandler=v=>{ holding=v; b.classList.toggle("held",v); };
+  let p=0, t=0, peak=0, result=null, lastFlap=0; const peg=el("peg");
+  await loop(dt=>{ t+=dt; const rear=(t%2.4)>1.6;
+    if (holding){ p+=dt*(rear?.1:.32); } else p-=dt*.3; p=Math.max(0,Math.min(1,p)); peak=Math.max(peak,p);
+    if (peg) peg.setAttribute("transform", rear ? "translate(250,300) rotate(-14)" : "translate(250,300)");
+    if (rear && t-lastFlap>.45){ SFX.flap(); lastFlap=t; }
+    status(rear?"He rears up! Hold fast!":(holding?"Steady... steady...":"Press and HOLD the button!"));
+    bar.style.width=(p*100)+"%";
+    if (p>=1){ result=true; return true; }
+    if (!holding && peak>.3 && p<=0){ result=false; return true; }
+    return false; });
+  holdKeyHandler=null; chk(g); return result;
+}
+async function flightGame(){
+  const g=RUN; clearActions(); status("Tap SPUR again and again to catch the vulture!");
+  let d=.5, result=null; const v=el("vult");
+  btn("🪽 Spur Pegasus!",{cls:"primary full",def:true,onTap:()=>{ d-=.085; SFX.flap(); }});
+  const m=meter(false), bar=m.querySelector("i");
+  await loop(dt=>{ d+=dt*.085; if (v) v.setAttribute("transform",`translate(${170+d*200},${120+Math.sin(performance.now()/300)*6})`);
+    bar.style.width=((1-d)*100)+"%";
+    if (d<=.04){ result=true; return true; } if (d>=1){ result=false; return true; } return false; });
+  chk(g); return result;
+}
+async function timingGame(o){ // generic: needle ping-pong, need o.hits successes
+  const g=RUN; clearActions(); status(o.prompt);
+  const m=meter(true), nd=m.querySelector(".needle"); let x=0, dir=1, hits=0, lock=0;
+  btn(o.label,{cls:"primary full",def:true,onTap:()=>{ if (lock>0) return; const inZone = x>=.41 && x<=.59;
+    if (inZone){ hits++; o.onHit(hits); lock=.45; } else { o.onMiss(); lock=.6; } }});
+  await loop(dt=>{ lock-=dt; x+=dir*dt*o.speed; if (x>1){x=1;dir=-1;} if (x<0){x=0;dir=1;} nd.style.left=(x*100)+"%"; return hits>=o.hits; });
+  chk(g);
+}
+async function witchGame(){
+  const g=RUN; clearActions(); status("Call Bubo while the eye is in the air!");
+  const hands=[[96,226],[200,186],[304,226]]; const eye=el("weye"); let t=0, res=null, flying=false;
+  btn("🦉 Now, Bubo!",{cls:"primary full",def:true,onTap:()=>{ res = flying; }});
+  await loop(dt=>{ t+=dt*.85; const seg=Math.floor(t)%3, f=t%1; let x,y;
+    const a=hands[seg], b=hands[(seg+1)%3];
+    if (f<.45){ x=a[0]; y=a[1]; flying=false; } else { const k=(f-.45)/.55; flying=k>.08&&k<.92; x=a[0]+(b[0]-a[0])*k; y=a[1]+(b[1]-a[1])*k-Math.sin(k*Math.PI)*60; }
+    eye.setAttribute("transform",`translate(${x},${y})`); eye.querySelector(".halo").setAttribute("opacity",flying?".95":"0");
+    return res!==null; });
+  chk(g); return res;
+}
+async function dogGame(){
+  const g=RUN; clearActions(); status("Strike the head that lunges!");
+  let side=null, t=0, next=.9, hits=0, lock=0; const L=el("dogL"), R=el("dogR");
+  const setLunge=s=>{ side=s; [L,R].forEach(h=>{ h.classList.remove("lunging"); h.querySelector(".dh").classList.remove("lunge"); h.querySelector(".eye").setAttribute("fill","#ffcc33"); });
+    if (s){ const h=s==="L"?L:R; h.querySelector(".dh").classList.add("lunge"); h.querySelector(".eye").setAttribute("fill","#ff2a1a"); SFX.growl(); } };
+  const hit=s=>{ if (lock>0) return; if (side && s===side){ hits++; SFX.clang(); SFX.hit(); flash(); setLunge(null); next=.7; lock=.3; status(`A true blow! (${hits} of 4)`);} else { quickLine("dog_miss"); SFX.boing(); lock=.4; } };
+  btn("◀ Left head",{cls:"alt",key:"1",onTap:()=>hit("L")}); btn("Right head ▶",{cls:"alt",key:"2",onTap:()=>hit("R")});
+  const kh=e=>{ if(e.code==="ArrowLeft") hit("L"); if(e.code==="ArrowRight") hit("R"); }; document.addEventListener("keydown",kh);
+  await loop(dt=>{ t+=dt; lock-=dt; next-=dt; if (next<=0){ if (side){ setLunge(null); next=.5; } else { setLunge(Math.random()<.5?"L":"R"); next=1.5; } } return hits>=4; });
+  document.removeEventListener("keydown",kh); setLunge(null); chk(g);
+}
+async function mirrorGame(){
+  const g=RUN; clearActions(); status("Watch the shield. Strike when its rim blazes gold!");
+  let t=0, res=null; const ref=el("mref"), rim=el("rim");
+  btn("⚔️ Strike!",{cls:"primary full",def:true,onTap:()=>{ const c=(1-Math.cos(t*1.9))/2; res = c>.8; }});
+  await loop(dt=>{ t+=dt; const c=(1-Math.cos(t*1.9))/2; const sc=.45+c*.95;
+    ref.setAttribute("transform",`translate(${Math.sin(t*.9)*20},${30-c*10}) scale(${sc})`);
+    rim.setAttribute("fill", c>.8 ? "#ffe27a" : "url(#gBronze)"); rim.setAttribute("filter", c>.8?"url(#fGlow)":"");
+    if (Math.floor(t*4)%7===0 && Math.random()<.04) SFX.rattle();
+    return res!==null; });
+  chk(g); return res;
+}
+async function scorpGame(){
+  const g=RUN; clearActions(); status("Tap each scorpion twice!");
+  const hp={sc1:2,sc2:2,sc3:2}; let left=3;
+  const base={sc1:[90,300],sc2:[200,330],sc3:[310,300]};
+  const strike=id=>{ if (!hp[id]) return; hp[id]--; SFX.hit(); SFX.clang(); const e=el(id); e.style.opacity=hp[id]?".6":"";
+    if (!hp[id]){ e.classList.add("gone"); e.removeAttribute("data-act"); left--; SFX.hiss(); } status(left?`${left} scorpion${left>1?"s":""} left!`:"Victory!"); };
+  const h=e=>{ const t=e.target.closest("[data-act]"); if (t && hp[t.dataset.act]!==undefined){ initAudio(); strike(t.dataset.act);} };
+  world().addEventListener("click",h);
+  btn("⚔️ Strike the nearest",{cls:"alt full",def:true,onTap:()=>{ const id=Object.keys(hp).find(k=>hp[k]>0); if(id) strike(id); }});
+  let t=0; await loop(dt=>{ t+=dt; for (const k in base){ if (hp[k]>0){ const [x,y]=base[k]; el(k).setAttribute("transform",`translate(${x+Math.sin(t*1.3+x)*18},${y}) scale(${k==="sc2"?1.05:.9})`);} } return left<=0; });
+  world().removeEventListener("click",h); chk(g);
+}
+async function krakenGame(){
+  const g=RUN; clearActions(); status("Unveil the head when the Kraken's eyes blaze and look your way!");
+  let t=0, res=null, missed=0, wasGaze=false; const eyes=document.querySelectorAll("#kraken .kEye");
+  btn("🐍 Unveil the Gorgon's head!",{cls:"primary full",def:true,onTap:()=>{ const ph=t%3.4; res = ph>2.2 ? "hit" : "early"; }});
+  await loop(dt=>{ t+=dt; const ph=t%3.4, gaze=ph>2.2;
+    eyes.forEach(e=>{ e.setAttribute("fill",gaze?"#fffbd0":"#b8902a"); e.setAttribute("filter",gaze?"url(#fGlow)":""); });
+    if (gaze && !wasGaze) SFX.growl();
+    if (!gaze && wasGaze){ missed++; if (missed>=3) res="late"; }
+    wasGaze=gaze; return res!==null; });
+  chk(g); return res;
+}
+
+/* ============================ STORY ============================ */
+async function titleScreen(){
+  const g=RUN; scene(bgTitle()); chapter("Clash of the Titans"); setSpeaker(""); clearActions();
+  $("#text").classList.remove("big"); $("#text").innerHTML=`<div class="title-h">CLASH<br>OF THE TITANS</div><div class="title-s">The Quest of Perseus · after the 1981 film</div>`;
+  $("#hintBtn").hidden=true;
+  await choose([{k:"go",label:"⚡ Begin the Quest",cls:"primary bolt"}]); chk(g);
+  initAudio(); bolt(1.3); await say("title_01");
+}
+async function chOlympus(){
+  await card("I","The Arena of Life");
+  scene(bgOlympus()); await say("olympus_01"); await say("olympus_02"); await say("olympus_03",{power:1.4}); await say("olympus_04");
+  scene(bgOlympus(figurine(200,250,1.1,false,"fig"))); 
+  plain("Tap the clay figure of Perseus to set it in the Arena.","ZEUS");
+  await tapTarget("fig","Place the figure"); SFX.chime();
+  scene(bgOlympus(figurine(200,326,1.1))); await say("olympus_05");
+  await say("thetis_01"); await say("olympus_06",{power:1.5}); await say("thetis_02");
+  scene(bgOlympus(figurine(200,326,1.1)+`<g class="glowp"><circle cx="200" cy="300" r="40" fill="#7fe0d0" opacity=".25"/></g>`)); SFX.splash();
+  await say("olympus_07",{power:1.3});
+  await giftsScene();
+  await say("olympus_09");
+}
+async function giftsScene(){
+  const g=RUN; const lines={g_shield:"hera_01",g_helmet:"athena_01",g_sword:"aphrodite_01"}; const kind={g_shield:"shield",g_helmet:"helmet",g_sword:"sword"};
+  const draw=()=>scene(bgOlympus(gift(90,250,"helmet","g_helmet",S.gifts.g_helmet)+gift(200,268,"sword","g_sword",S.gifts.g_sword)+gift(310,250,"shield","g_shield",S.gifts.g_shield)));
+  draw(); await say("olympus_08");
+  while (Object.keys(S.gifts).length<3){
+    plain(`Tap a gift to claim it. (${Object.keys(S.gifts).length} of 3)`,"ZEUS"); clearActions();
+    const pick = await new Promise(res=>{
+      const h=e=>{ const t=e.target.closest("[data-act]"); if(t && lines[t.dataset.act] && !S.gifts[t.dataset.act]){ world().removeEventListener("click",h); res(t.dataset.act);} };
+      world().addEventListener("click",h);
+      for (const k of ["g_helmet","g_sword","g_shield"]) if (!S.gifts[k]) btn({g_helmet:"⛑️ Helmet",g_sword:"🗡️ Sword",g_shield:"🛡️ Shield"}[k],{cls:"alt",onTap:()=>{ world().removeEventListener("click",h); res(k);} });
+    }); chk(g);
+    S.gifts[pick]=true; SFX.harp(); draw(); await say(lines[pick]);
+  }
+}
+async function chJoppa(){
+  await card("II","Joppa");
+  scene(bgJoppa(perseus(150,310,1.3,{helmet:false,shield:true}))); SFX.sea(3); await say("joppa_01");
+  scene(bgJoppa(perseus(140,310,1.3)+ammon(250,312,1.3))); await say("joppa_02"); await say("joppa_03"); await say("joppa_04"); await say("joppa_05");
+}
+async function chPegasus(){
+  await card("III","Pegasus");
+  scene(bgWell(`<g id="peg" transform="translate(250,300)"><g transform="scale(1.15)">${pegasus(0,0,1,{still:true,flip:true})}</g></g>`+perseus(100,320,1.2)));
+  await say("pegasus_01"); await say("pegasus_02");
+  for(;;){ const ok=await holdGame(); if (ok) break; S.retries++; SFX.flap(); await say("pegasus_fail"); }
+  SFX.fanfare(); await say("pegasus_03");
+  const fly = ()=>scene(sky("#0f1a5a","#050a24")+stars(60,8,260)+moon(330,60,18)+`<g class="scroll">${[0,400].map(o=>`<path d="M${o-20},400 L${o+20},320 L${o+70},340 L${o+110},290 L${o+170},330 L${o+230},300 L${o+290},350 L${o+340},310 L${o+420},400Z" fill="#1d2a3a"/>`).join("")}</g>`
+     +`<g class="scroll" style="animation-duration:3s">${[0,400].map(o=>`<path d="M${o-10},400 L${o+60},360 L${o+130},380 L${o+200},350 L${o+280},372 L${o+410},400Z" fill="#141c2a"/>`).join("")}</g>`
+     +cloud(60,140,.9,"#c9d3ff",.4)+cloud(260,220,1.1,"#c9d3ff",.35)
+     +`<g id="vult" transform="translate(270,120)">${vulture(0,0,.8)}</g>`
+     +`<g transform="translate(100,230)"><g class="bob">${pegasus(0,0,1,{fly:true})}${perseus(4,-14,.8,{helmet:true})}</g></g>`);
+  fly(); await say("pegasus_04");
+  for(;;){ const ok=await flightGame(); if (ok) break; S.retries++; await say("pegasus_fly_fail"); fly(); }
+  SFX.flap(); await say("pegasus_05");
+}
+async function chSwamp(){
+  await card("IV","The Marsh of Calibos");
+  const base = (p,extra="")=>bgSwamp(`<g transform="translate(260,180)">${vulture(0,0,.75)}</g>`+andromeda(250,330,1,{spirit:true,op:.6,cls:"glowp"})+calibos(320,320,1.3,{flip:true})+p+extra);
+  scene(base(perseus(80,330,1.2))); await say("swamp_01");
+  for(;;){ const c=await choose([{k:"helm",label:"⛑️ Wear the helmet",cls:"primary"},{k:"open",label:"🔥 Stride in openly",cls:"alt"}],"How will you go forward?");
+    if (c==="helm") break; S.retries++; await say("swamp_open"); }
+  SFX.chime(); scene(base(perseus(120,330,1.2,{helmet:true,op:.28})));
+  await say("swamp_02"); SFX.hiss(); await say("swamp_03");
+  scene(base(perseus(150,330,1.2,{swordUp:true}))); SFX.growl(); await say("swamp_04",{power:1.3});
+  await say("swamp_05");
+  const duel=(hit)=>scene(bgSwamp(perseus(150,330,1.25,{swordUp:hit%2===1})+calibos(250-(hit*6),326,1.35,{flip:true,cls:hit?"":"bob"})));
+  duel(0);
+  await timingGame({prompt:"Strike when the white spark is inside the gold!",label:"⚔️ Strike!",speed:1.15,hits:3,
+    onHit:h=>{ SFX.clang(); flash(); duel(h); status(`A true blow! (${h} of 3)`); },
+    onMiss:()=>{ SFX.clang(); SFX.boing(); quickLine("duel_miss"); }});
+  scene(bgSwamp(perseus(150,330,1.25)+calibos(260,334,1.3,{flip:true,noHand:true})+`<circle cx="210" cy="356" r="6" fill="none" stroke="url(#gGold)" stroke-width="3"/><circle cx="207" cy="351" r="2.6" fill="#fff"/><circle cx="213" cy="351" r="2.6" fill="#fff"/>`));
+  SFX.growl(); await say("swamp_06",{power:1.2}); await say("swamp_07");
+  const c=await choose([{k:"mercy",label:"🕊️ Spare him",cls:"primary"},{k:"wrath",label:"🔥 Drive him into the dark",cls:"danger"}],"Calibos lies at your mercy.");
+  S.mercy = c==="mercy";
+  if (S.mercy){ SFX.harp(); await say("swamp_mercy"); } else { SFX.growl(); await say("swamp_wrath"); }
+  scene(bgSwamp(perseus(150,330,1.25)));
+  await say("swamp_08",{power:1.2});
+}
+async function chRiddle(){
+  await card("V","The Riddle");
+  scene(bgCourt(andromeda(200,200,1.1)+perseus(120,320,1.2)+`<g transform="translate(280,206)"><circle cy="-40" r="10" fill="#e0b08a"/><path d="M-10,-50 l4,-8 6,6 6,-6 4,8Z" fill="url(#gGold)"/><path d="M-14,-30 h28 l6,40 h-40Z" fill="#7a2a8a"/></g>`));
+  SFX.fanfare(); await say("riddle_01"); await say("riddle_02");
+  for(;;){ const c=await choose([{k:"crown",label:"👑 A crown"},{k:"ring",label:"💍 A ring"},{k:"moon",label:"🌙 The moon and stars"}],"What can it be?");
+    if (c==="ring") break; S.retries++; SFX.boing(); await say("riddle_wrong"); }
+  SFX.fanfare(); await say("riddle_03",{power:1.2});
+}
+async function chTemple(){
+  await card("VI","The Temple of Thetis");
+  scene(bgTemple(andromeda(170,330,.9)+perseus(230,340,1))); SFX.harp(); await say("temple_01");
+  await say("temple_02",{power:1.2});
+  el("tEyeL").setAttribute("fill","#7fe0d0"); el("tEyeR").setAttribute("fill","#7fe0d0"); el("tEyeL").setAttribute("filter","url(#fGlow)"); el("tEyeR").setAttribute("filter","url(#fGlow)");
+  SFX.sea(4); await say("thetis_03",{power:1.6});
+  scene(bgSwamp(`<g transform="translate(200,240)">${pegasus(0,0,1.1,{still:true})}</g><path d="M150,230 Q200,200 250,236 M170,210 L240,260" stroke="#8a6a3a" stroke-width="4" fill="none"/>`+calibos(320,330,1,{flip:true})));
+  SFX.flap(); await say("temple_03"); await say("temple_04");
+}
+async function chBubo(){
+  await card("VII","Bubo");
+  scene(bgOlympus(`<g transform="translate(300,260)"><circle cy="-40" r="12" fill="#e0c8b0"/><path d="M-12,-52 Q0,-70 12,-52Z" fill="#c9cfe0"/><path d="M-16,-28 h32 l6,60 h-44Z" fill="#cfd8ff"/></g>`+bubo(110,250,1.2,{cls:"bob"})));
+  await say("bubo_01"); await say("athena_02");
+  scene(bgOlympus(bubo(200,240,1.6,{act:"bubo",cls:"bob"}))); SFX.whir(); await say("bubo_02");
+  plain("Tap Bubo to wake him.","ZEUS"); await tapTarget("bubo","🦉 Wake Bubo"); SFX.whir(); setTimeout(()=>SFX.click(),500);
+  S.bubo=true; $("#hintBtn").hidden=false; $("#hintBtn").innerHTML=buboIcon();
+  scene(bgOlympus(bubo(200,240,1.6,{fly:true,cls:"bob"}))); await say("bubo_03");
+  plain("Bubo's button (top right) gives a hint whenever you need one.","");
+  await choose([{k:"ok",label:"Onward ▸",cls:"primary"}]);
+}
+async function chWitches(){
+  await card("VIII","The Stygian Witches"); S.hintKey="witches";
+  const draw=()=>scene(bgCave(witch(80,250,1.1,false)+witch(200,210,1.05,false)+witch(320,250,1.1,true)+perseus(70,350,1)+bubo(340,340,.8)
+    +`<g id="weye" transform="translate(96,226)"><circle class="halo" r="16" fill="#ffe27a" opacity="0" filter="url(#fGlow)"/><circle r="9" fill="#fff" stroke="#e2b03a" stroke-width="2"/><circle r="4.5" fill="#2f7f3f"/></g>`));
+  draw(); SFX.cackle(); await say("witch_01"); await say("witch_02");
+  const c=await choose([{k:"kind",label:"🙏 Ask them kindly",cls:"alt"},{k:"seize",label:"🦉 Seize the eye with Bubo",cls:"primary"}],"How will you win their knowledge?");
+  if (c==="kind"){ SFX.cackle(); await say("witch_kind"); }
+  await say("witch_03");
+  for(;;){ const ok=await witchGame(); if (ok) break; S.retries++; SFX.cackle(); await say("witch_fail"); }
+  SFX.whir(); SFX.click(); SFX.cackle();
+  scene(bgCave(witch(80,250,1.1,false)+witch(200,210,1.05,false)+witch(320,250,1.1,true)+perseus(70,350,1)+bubo(140,320,.8)+`<g transform="translate(110,300)"><circle r="16" fill="#ffe27a" opacity=".8" filter="url(#fGlow)"/><circle r="9" fill="#fff"/><circle r="4.5" fill="#2f7f3f"/></g>`));
+  await say("witch_04",{power:1.3}); await say("witch_05");
+  const r=await choose([{k:"honor",label:"🤝 Return the eye",cls:"primary"},{k:"toss",label:"🌑 Toss it into the dark",cls:"danger"}],"You promised to give it back.");
+  S.honor = r==="honor";
+  if (S.honor){ SFX.chime(); await say("witch_honor"); } else { SFX.cackle(); await say("witch_toss"); }
+}
+async function chStyx(){
+  await card("IX","The River Styx"); S.hintKey="styx";
+  const boat=(x,coin)=>bgStyx(`<g id="boatwrap"><g transform="translate(${x},300)">${charon(0,0,1)}${perseus(40,-2,.8,{sword:true})}${bubo(70,-30,.6)}</g></g>`+(coin?`<g data-act="coin" class="tap" transform="translate(300,200)"><circle r="44" fill="#000" opacity="0"/><circle r="40" class="tap-ring"/><circle r="18" fill="url(#gGold)" stroke="#7a5410" stroke-width="3" class="glowp"/><text y="6" text-anchor="middle" font-size="16" fill="#7a5410" font-family="Georgia,serif">Ω</text></g>`:""));
+  scene(boat(150,false)); SFX.sea(4); await say("styx_01"); scene(boat(150,true)); await say("styx_02");
+  plain("Tap the coin to pay Charon.",""); await tapTarget("coin","🪙 Pay the ferryman"); SFX.coin();
+  scene(boat(150,false)); const b=el("boatwrap");
+  if (b){ b.style.transition="transform 4s steps(16)"; requestAnimationFrame(()=>requestAnimationFrame(()=>{ b.style.transform="translateX(120px)"; })); }
+  SFX.sea(5); await say("styx_03");
+}
+async function chDog(){
+  await card("X","The Isle of the Dead"); S.hintKey="dog";
+  scene(bgIsle(dog(240,320,1.2)+perseus(90,340,1.2,{swordUp:true}))); SFX.growl(); SFX.growl();
+  await say("dog_01",{power:1.3});
+  await dogGame(); SFX.thunder(.8);
+  scene(bgIsle(`<g transform="translate(240,340) rotate(8)" opacity=".7">${dog(0,0,1.1)}</g>`+perseus(110,340,1.2)));
+  await say("dog_02");
+}
+async function chMedusa(){
+  await card("XI","Medusa"); S.hintKey="medusa_enter";
+  scene(bgLair(medusa(250,260,.95,{flip:true,cls:"bob"})+`<rect x="200" y="160" width="140" height="140" fill="#000" opacity=".35"/>`+perseus(90,340,1.15)));
+  SFX.rattle(); SFX.hiss(); await say("medusa_01"); await say("medusa_02");
+  for(;;){ const c=await choose([{k:"charge",label:"🚪 Charge through the doors",cls:"danger"},{k:"creep",label:"🌑 Creep through the shadows",cls:"primary"}],"How will you enter?");
+    if (c==="creep") break; S.retries++; SFX.whoosh(); SFX.clang(); await say("medusa_charge"); }
+  // checkpoint: the gaze
+  for(;;){
+    S.hintKey="medusa_look";
+    scene(bgLair(`<g opacity=".9">${medusa(230,270,1,{flip:true,cls:"bob"})}</g>`+`<g id="pers">${perseus(110,350,1.2)}</g>`));
+    SFX.rattle(); await say("medusa_03");
+    const c=await choose([{k:"look",label:"👁️ Look at her directly",cls:"danger"},{k:"shield",label:"🛡️ Watch her in the shield",cls:"primary"}],"How will you look upon her?");
+    if (c==="look"){
+      S.stoned++; S.retries++; SFX.hiss(); SFX.stone();
+      scene(bgLair(medusa(230,270,1,{flip:true})+`<g class="stone">${perseus(110,350,1.2)}</g>`+`<rect x="-300" y="-400" width="1000" height="1200" fill="#7a7a6a" opacity=".25"/>`));
+      await say("stone_01",{power:1.3}); await say("stone_02",{power:1.5}); continue;
+    }
+    S.hintKey="medusa_strike";
+    scene(bgLair(`<rect x="-300" y="-400" width="1000" height="1200" fill="#000" opacity=".45"/>`
+      +shieldMirror(200,190,120,`<rect x="-150" y="-150" width="300" height="300" fill="#2a1a0a"/>${fire(-80,10,.8)}${column(80,-120,240,22)}<g id="mref" transform="scale(.5)">${medusa(-20,60,1.1,{cls:"bob"})}</g>`)
+      +`<g transform="translate(200,360)"><path d="M-30,40 Q-26,-10 0,-14 Q26,-10 30,40Z" fill="#9c2f1f"/><circle cy="-26" r="16" fill="#3a2414"/><path d="M-24,-10 q-30,-30 -40,-80 M24,-10 q30,-30 40,-80" stroke="#c98d5c" stroke-width="10" stroke-linecap="round" fill="none"/></g>`));
+    await say("medusa_04");
+    let won=false;
+    for(;;){ const ok=await mirrorGame(); if (ok){ won=true; break; } S.retries++; SFX.hiss(); await say("medusa_early"); }
+    if (won) break;
+  }
+  SFX.clang(); bolt(1.4);
+  scene(bgLair(medusaHead(200,170,1.6)+perseus(200,350,1.3,{swordUp:true,shield:false})));
+  await say("medusa_05",{power:1.4});
+  scene(bgLair(`<path d="M160,330 q40,-16 80,0 q-40,16 -80,0Z" fill="#3a6a2a"/><g transform="translate(200,320)" opacity=".6"><circle r="15" fill="url(#gShield)"/></g>`+perseus(110,340,1.2,{shield:false})));
+  SFX.hiss(); await say("medusa_06");
+  // scorpions
+  S.hintKey="scorp";
+  scene(sky("#101830","#050812")+stars(30,13,200)+ground(270,"#2a2418")+fire(330,250,.7)+calibos(330,300,.9,{flip:true,noHand:true})+perseus(70,250,1,{shield:false,swordUp:true})+`<path d="M150,300 q30,-12 60,0 q-30,12 -60,0Z" fill="#5a1a1a" opacity=".7"/>`);
+  SFX.growl(); await say("scorp_01",{power:1.3});
+  scene(sky("#101830","#050812")+stars(30,13,200)+ground(250,"#2a2418")+fire(360,236,.6)+perseus(60,240,1,{shield:false,swordUp:true})+scorpion(90,300,.9,"sc1")+scorpion(200,330,1.05,"sc2")+scorpion(310,300,.9,"sc3"));
+  SFX.hiss(); await say("scorp_02");
+  await scorpGame();
+  scene(sky("#101830","#050812")+stars(30,13,200)+ground(270,"#2a2418")+fire(330,250,.7)+perseus(160,300,1.2,{shield:false}));
+  await say("scorp_03");
+}
+async function chKraken(){
+  await card("XII","The Kraken"); S.hintKey="kraken_send";
+  scene(bgSwamp(perseus(90,330,1.1,{shield:false})+bubo(170,290,1,{act:"bsend"})+`<g transform="translate(300,250)">${pegasus(0,0,.8,{still:true})}</g>`));
+  await say("kraken_01");
+  plain("Tap Bubo to send him.",""); await tapTarget("bsend","🦉 Send Bubo!"); SFX.whir(); SFX.click();
+  scene(bgJoppa(`<g transform="translate(200,330) rotate(80)">${perseus(0,0,1.1,{shield:false})}</g>`)); SFX.flap();
+  await say("kraken_02");
+  scene(bgOlympus(figurine(200,330,1.1,true)+`<g transform="translate(320,240)"><circle cy="-40" r="12" fill="#cfe"/><path d="M-16,-28 h32 l6,60 h-44Z" fill="#5ab0a0"/></g>`));
+  await say("thetis_04"); SFX.roar(); await say("kraken_03",{power:2});
+  S.hintKey="kraken_call";
+  await say("kraken_04");
+  const c=await choose([{k:"call",label:"⚡ Call upon Zeus",cls:"primary"},{k:"alone",label:"💪 Rise by my own will",cls:"alt"}],"Your figure lies fallen.");
+  S.humble = c==="call";
+  if (!S.humble){ SFX.hit(); await say("kraken_alone"); await choose([{k:"call",label:"⚡ Call upon Zeus",cls:"primary"}],"Ask for help."); }
+  scene(bgOlympus(figurine(200,326,1.1)+`<circle cx="200" cy="300" r="50" fill="url(#gGlow)" class="glowp"/>`)); SFX.chime();
+  await say("kraken_05",{power:1.4});
+  // the sea cliffs
+  S.hintKey="kraken";
+  const cliffs=(ky,extra="")=>bgCliffs(`<g transform="translate(340,262)">${andromeda(0,0,.8,{chained:true})}</g>`+kraken({y:ky})+extra);
+  scene(cliffs(470)); SFX.sea(6); SFX.roar();
+  // stepped, stop-motion style rise
+  await (async()=>{ for(let i=0;i<=10;i++){ const k=el("kraken"); if(k) k.setAttribute("transform",`translate(200,${470-i*22})`); await sleep(120);} })();
+  await say("kraken_06",{power:1.6});
+  const battle=()=>scene(cliffs(250,`<g transform="translate(70,110)"><g class="bob">${pegasus(0,0,.75,{fly:true})}${perseus(4,-12,.6,{shield:false})}</g></g>`+`<g transform="translate(300,80)">${bubo(0,0,.7,{fly:true})}</g>`));
+  battle(); SFX.flap(); SFX.whir(); await say("kraken_07");
+  for(;;){ const r=await krakenGame(); if (r==="hit") break; S.retries++;
+    if (r==="early"){ SFX.roar(); await say("kraken_early"); } else { SFX.splash(); SFX.roar(); await say("kraken_late"); } battle(); }
+  // petrify
+  bolt(1.6); SFX.hiss(); SFX.stone();
+  scene(cliffs(250,medusaHead(90,120,1)+`<g transform="translate(70,190)"><g class="bob">${pegasus(0,0,.6,{fly:true})}</g></g>`));
+  const k=el("kraken"); k.classList.add("stone");
+  await say("kraken_08",{power:2});
+  for(let i=0;i<=8;i++){ k.setAttribute("transform",`translate(200,${250+i*28}) rotate(${i*2})`); await sleep(110); } SFX.splash(); SFX.sea(4);
+  await say("kraken_09");
+}
+async function chEnding(){
+  await card("XIII","Among the Stars");
+  scene(bgCliffs(`<g transform="translate(200,300)"><g class="bob">${pegasus(0,0,1,{fly:true})}</g></g>`+`<g transform="translate(330,262)">${andromeda(0,0,.8)}</g>`+perseus(290,270,.8,{shield:false})));
+  SFX.fanfare(); await say("end_01");
+  scene(bgTemple(andromeda(175,330,1)+perseus(225,340,1.1,{shield:false})+[0,1,2,3,4,5].map(i=>`<circle cx="${60+i*56}" cy="${240+(i%2)*14}" r="5" fill="#ffb3c4" class="tw"/>`).join("")));
+  SFX.harp(); await say("end_02");
+  const virtue=(S.mercy?1:0)+(S.honor?1:0)+(S.humble?1:0); const great=virtue>=2;
+  const P=constellation([[60,60],[84,84],[108,70],[92,112],[74,140],[112,142]],[[0,1],[1,2],[1,3],[3,4],[3,5]],"PERSEUS",88,170,"glowp");
+  const A=constellation([[240,60],[270,78],[300,92],[332,110],[300,124]],[[0,1],[1,2],[2,3],[2,4]],"ANDROMEDA",290,150,"glowp");
+  const G=constellation([[110,220],[190,214],[196,276],[116,282],[70,250]],[[0,1],[1,2],[2,3],[3,0],[0,4]],"PEGASUS",150,306);
+  const C=constellation([[230,250],[256,284],[280,256],[306,290],[334,252]],[[0,1],[1,2],[2,3],[3,4]],"CASSIOPEIA",282,320);
+  scene(bgNightSky(P+A+(great?G+C:"")+zeusFace(200,372,.7)));
+  SFX.chime();
+  if (great){ await say("end_mercy",{power:1.6}); await say("end_mercy2"); } else { await say("end_hard"); await say("end_hard2"); }
+  SFX.fanfare(); await say("end_03",{power:1.2,label:"See your legend ▸"});
+  // summary
+  const row=(ok,a,b)=>`<div>${ok?"✦":"✧"} ${ok?a:b}</div>`;
+  plain(`<div style="text-align:center;color:var(--gold);letter-spacing:.12em">${great?"THE LEGEND OF PERSEUS":"A HERO'S FIRST TALE"}</div>
+   <div style="font-size:.85em;margin-top:6px">${row(S.mercy,"You spared Calibos","You drove Calibos away")}${row(S.honor,"You kept your word to the witches","You tossed away the witches' eye")}${row(S.humble,"You called upon Zeus","You tried to rise alone")}
+   <div class="sub">Second chances from Zeus: ${S.retries} · Times turned to stone: ${S.stoned} · Bubo's hints: ${S.hints}</div>
+   ${great?"":`<div class="sub">Try mercy, honor and humility for the full ending.</div>`}</div>`,"");
+  await choose([{k:"again",label:"⚡ Play Again",cls:"primary bolt"}]);
+}
+async function main(){
+  RUN++; const g=RUN; resetState(); stopVoice(true); SFX.droneOff(); $("#toast").classList.remove("on");
+  try{
+    await titleScreen(); await chOlympus(); await chJoppa(); await chPegasus(); await chSwamp(); await chRiddle(); await chTemple();
+    await chBubo(); await chWitches(); await chStyx(); await chDog(); await chMedusa(); await chKraken(); await chEnding();
+    if (g===RUN) main();
+  } catch(e){ if (!(e instanceof Abort)) { console.error(e); } }
+}
+/* test hook: lets automated tests jump to a chapter (not used in normal play) */
+window.__cott = { S, jump: async name=>{ RUN++; resetState(); S.bubo=true; $("#hintBtn").hidden=false; $("#hintBtn").innerHTML=buboIcon(); const fns={olympus:chOlympus,joppa:chJoppa,pegasus:chPegasus,swamp:chSwamp,riddle:chRiddle,temple:chTemple,bubo:chBubo,witches:chWitches,styx:chStyx,dog:chDog,medusa:chMedusa,kraken:chKraken,ending:chEnding}; const g=RUN; try{ await fns[name](); }catch(e){ if(!(e instanceof Abort)) console.error(e);} } };
+setMuted(AU.muted);
+main();
+</script>
+</body>
+</html>
